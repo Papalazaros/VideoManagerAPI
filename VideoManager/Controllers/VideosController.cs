@@ -28,7 +28,7 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("random")]
-        public async Task<List<Guid>> GetRandomVideoId(int count)
+        public async Task<List<Video>> GetRandomVideoId(int count)
         {
             return await _videoService.GetRandom(count);
         }
@@ -36,16 +36,11 @@ namespace VideoManager.Controllers
         [HttpGet]
         public async Task<List<Video>> GetAllVideos(VideoStatus? videoStatus)
         {
-            if (videoStatus.HasValue)
-            {
-                return await _videoService.GetAll(videoStatus.Value);
-            }
-
-            return await _videoService.GetAll();
+            return await _videoService.GetAll(videoStatus);
         }
 
         [HttpDelete]
-        [Route("{videoId:Guid}/stream")]
+        [Route("{videoId:Guid}")]
         public async Task<Video> Delete(Guid videoId)
         {
             return await _videoService.Delete(videoId);
@@ -53,9 +48,27 @@ namespace VideoManager.Controllers
 
         [HttpDelete]
         [Route("deletefailed")]
-        public async Task<List<Video>> DeleteFailedFiles()
+        public async Task<IEnumerable<Video>> DeleteFailedFiles()
         {
-            return await _videoService.DeleteFailed();
+            List<Video> failedVideos = await _videoService
+                .GetAll(VideoStatus.Failed);
+
+            return await _videoService.DeleteMany(failedVideos.Select(x => x.Id));
+        }
+
+        [HttpDelete]
+        [Route("deleteduplicates")]
+        public async Task<IEnumerable<Video>> DeleteDuplicateFiles()
+        {
+            List<Video> videos = await _videoService.GetAll();
+
+            IEnumerable<Guid> duplicateVideoIds = videos
+                .GroupBy(x => x.OriginalFileName)
+                .Where(x => x.Count() > 1)
+                .SelectMany(x => x.Skip(1))
+                .Select(x => x.Id);
+
+            return await _videoService.DeleteMany(duplicateVideoIds);
         }
 
         [HttpGet]
@@ -69,7 +82,7 @@ namespace VideoManager.Controllers
                 return NoContent();
             }
 
-            return PhysicalFile(Path.Join(Directory.GetCurrentDirectory(), video.AssignedName), "video/mp4", true);
+            return PhysicalFile(Path.Join(Directory.GetCurrentDirectory(), video.GetEncodedFilePath()), "video/mp4", true);
         }
 
         [HttpGet]

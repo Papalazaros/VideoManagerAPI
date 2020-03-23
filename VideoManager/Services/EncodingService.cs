@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using VideoManager.Models;
@@ -12,29 +12,25 @@ namespace VideoManager.Services
     public class EncodingService : BackgroundService
     {
         private readonly ILogger<EncodingService> _logger;
-        private readonly IEncoder _encoder;
         private readonly IServiceScopeFactory _scopeFactory;
+        private const int _defaultPollingInterval = 15;
+        private const int _maxPollingInterval = 300;
+        private static int _pollingInterval = _defaultPollingInterval;
+        private const int _pollingIntervalIncreaseRate = 2;
+        private const int _maxConcurrentTasks = 4;
 
-        private const int _pollingInterval = 15;
-
-        private static readonly TimeSpan _timeToCheckInterval = TimeSpan.FromSeconds(_pollingInterval);
-
-        public EncodingService(ILogger<EncodingService> logger, IServiceScopeFactory scopeFactory, IEncoder encoder)
+        public EncodingService(ILogger<EncodingService> logger, IServiceScopeFactory scopeFactory)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
-            _encoder = encoder;
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            //Do your preparation (e.g. Start code) here
             while (!cancellationToken.IsCancellationRequested)
             {
                await DoWork();
             }
-
-            //Do your cleanup (e.g. Stop code) here
         }
 
         private async Task DoWork()
@@ -45,40 +41,54 @@ namespace VideoManager.Services
             using IServiceScope scope = _scopeFactory.CreateScope();
 
             IVideoService videoService = scope.ServiceProvider.GetRequiredService<IVideoService>();
-            VideoManagerDbContext videoManagerDbContext = scope.ServiceProvider.GetRequiredService<VideoManagerDbContext>();
 
-            Video video = await videoService.GetVideoToEncode();
+            List<Video> videos = await videoService.GetVideosToEncode(_maxConcurrentTasks);
 
-            if (video == null)
+            if (videos.Count == 0)
             {
+                TimeSpan _timeToCheckInterval = TimeSpan.FromSeconds(_pollingInterval);
+
                 _logger.LogInformation(
                     "No videos to encode. Sleeping for {_pollingInterval} seconds.", _timeToCheckInterval.TotalSeconds);
 
                 await Task.Delay(_timeToCheckInterval);
+
+                _pollingInterval = Math.Min(_maxPollingInterval, _pollingInterval * _pollingIntervalIncreaseRate);
             }
             else
             {
-                video.Status = VideoStatus.Encoding;
-                await videoManagerDbContext.SaveChangesAsync();
+                VideoManagerDbContext videoManagerDbContext = scope.ServiceProvider.GetRequiredService<VideoManagerDbContext>();
+                IEncoder encodingService = scope.ServiceProvider.GetRequiredService<IEncoder>();
 
-                _logger.LogInformation(
-                    "Starting encode of {video}.", video);
+                _pollingInterval = _defaultPollingInterval;
 
-                Stopwatch stopWatch = new Stopwatch();
-                stopWatch.Start();
+                List<Task<EncodeResult>> encodingTasks = new List<Task<EncodeResult>>(videos.Count);
 
-                bool encodedSuccessfully = await _encoder.Encode(video);
+                videoManagerDbContext.UpdateRange(videos);
 
-                stopWatch.Stop();
-
-                video.Status = encodedSuccessfully
-                    ? VideoStatus.Ready
-                    : VideoStatus.Failed;
+                foreach (Video video in videos)
+                {
+                    encodingTasks.Add(encodingService.Encode(video));
+                    video.Status = VideoStatus.Encoding;
+                }
 
                 await videoManagerDbContext.SaveChangesAsync();
 
-                _logger.LogInformation(
-                    "Finished encode of {video} in {elapsedMilliseconds} milliseconds.", video, stopWatch.ElapsedMilliseconds);
+                for (int i = 0; i < encodingTasks.Count; i++)
+                {
+                    Video video = videos[i];
+
+                    EncodeResult encodeResult = await encodingTasks[i];
+
+                    video.Status = encodeResult.Success
+                        ? VideoStatus.Ready
+                        : VideoStatus.Failed;
+
+                    video.EncodeTime = encodeResult.EncodeTime;
+                    video.EncodedLength = encodeResult.EncodedFileLength;
+                }
+
+                await videoManagerDbContext.SaveChangesAsync();
             }
         }
     }

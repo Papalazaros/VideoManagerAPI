@@ -12,14 +12,14 @@ namespace VideoManager.Services
 {
     public interface IVideoService
     {
-        Task<List<Video>> GetAll(VideoStatus videoStatus);
-        Task<List<Video>> GetAll();
+        Task<List<Video>> GetAll(VideoStatus? videoStatus = null);
+        Task<List<Guid>> GetAllIds(VideoStatus? videoStatus = null);
         Task<Video> Get(Guid videoId);
-        Task<List<Guid>> GetRandom(int count);
-        Task<Video> GetVideoToEncode();
+        Task<List<Video>> GetRandom(int count);
+        Task<List<Video>> GetVideosToEncode(int count);
         Task<Video> Create(IFormFile formFile);
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
-        Task<List<Video>> DeleteFailed();
+        Task<IEnumerable<Video>> DeleteMany(IEnumerable<Guid> videoIds);
         Task<Video> Delete(Guid videoId);
     }
 
@@ -28,6 +28,7 @@ namespace VideoManager.Services
         private readonly ILogger<VideoService> _logger;
         private readonly VideoManagerDbContext _videoManagerDbContext;
         private readonly IFileService _fileService;
+        private static readonly DateTime _encodingCooldown = DateTime.UtcNow.AddMinutes(-30);
 
         public VideoService(ILogger<VideoService> logger,
             VideoManagerDbContext videoManagerDbContext,
@@ -38,38 +39,35 @@ namespace VideoManager.Services
             _fileService = fileService;
         }
 
-        public async Task<Video> GetVideoToEncode()
+        public async Task<List<Video>> GetVideosToEncode(int count)
         {
-            DateTime encodingCooldown = DateTime.UtcNow.AddMinutes(-30);
-
             return await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.Status == VideoStatus.Uploaded
-                    || (x.Status == VideoStatus.Encoding && x.CreatedDate < encodingCooldown));
+                .AsNoTracking()
+                .Where(x => x.Status == VideoStatus.Uploaded
+                    || (x.Status == VideoStatus.Encoding && x.CreatedDate < _encodingCooldown))
+                .Take(count)
+                .ToListAsync();
         }
 
-        public async Task<List<Guid>> GetRandom(int count)
+        public async Task<List<Video>> GetRandom(int count)
         {
-            List<Guid> availableVideoIds = await _videoManagerDbContext.Videos
+            List<Video> availableVideoIds = await _videoManagerDbContext.Videos
                 .AsNoTracking()
                 .Where(x => x.Status == VideoStatus.Ready)
-                .Select(x => x.Id)
                 .ToListAsync();
 
-            List<Guid> guids = new List<Guid>(count);
+            List<Video> videos = new List<Video>(count);
 
-            if (availableVideoIds.Count == 0)
-            {
-                return guids;
-            }
+            if (availableVideoIds.Count == 0) return videos;
 
             Random random = new Random();
 
             for(int i = 0; i < count; i++)
             {
-                guids.Add(availableVideoIds[random.Next(0, availableVideoIds.Count - 1)]);
+                videos.Add(availableVideoIds[random.Next(0, availableVideoIds.Count - 1)]);
             }
 
-            return guids;
+            return videos;
         }
 
         public async Task<Video> Get(Guid videoId)
@@ -81,25 +79,53 @@ namespace VideoManager.Services
         {
             Video video = await _videoManagerDbContext.Videos.FindAsync(videoId);
 
-            _videoManagerDbContext.Remove(video);
-
-            await _videoManagerDbContext.SaveChangesAsync();
+            if (video != null)
+            {
+                _videoManagerDbContext.Remove(video);
+                await _videoManagerDbContext.SaveChangesAsync();
+            }
 
             return video;
         }
 
-        public async Task<List<Video>> DeleteFailed()
+        public async Task<IEnumerable<Video>> DeleteMany(IEnumerable<Guid> videoIds)
         {
-            List<Video> failedVideos = await _videoManagerDbContext.Videos
-                .AsNoTracking()
-                .Where(x => x.Status == VideoStatus.Failed)
-                .ToListAsync();
+            List<Video> videosToDelete = new List<Video>();
+            List<Guid> deletedVideoIds = new List<Guid>();
 
-            _videoManagerDbContext.RemoveRange(failedVideos);
+            foreach (Guid videoId in videoIds)
+            {
+                Video video = await _videoManagerDbContext.Videos.FindAsync(videoId);
 
-            await _videoManagerDbContext.SaveChangesAsync();
+                if (video != null)
+                {
+                    videosToDelete.Add(video);
+                    deletedVideoIds.Add(video.Id);
+                }
+            }
 
-            return failedVideos;
+            if (videosToDelete.Count > 0)
+            {
+                _videoManagerDbContext.RemoveRange(videosToDelete);
+                await _videoManagerDbContext.SaveChangesAsync();
+            }
+
+            return videosToDelete;
+        }
+
+        private Video CreateVideoFromIFormFile(IFormFile formFile)
+        {
+            Guid guid = Guid.NewGuid();
+            string fileExtension = Path.GetExtension(formFile.FileName);
+
+            return new Video
+            {
+                Id = guid,
+                OriginalFileName = formFile.FileName,
+                OriginalLength = formFile.Length,
+                OriginalType = fileExtension,
+                Status = VideoStatus.Uploaded
+            };
         }
 
         public async Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles)
@@ -109,21 +135,10 @@ namespace VideoManager.Services
 
             foreach (IFormFile formFile in formFiles)
             {
-                Guid guid = Guid.NewGuid();
-                string fileExtension = Path.GetExtension(formFile.FileName);
-
-                Video video = new Video
-                {
-                    Id = guid,
-                    AssignedName = $@"Videos\{guid}{fileExtension}",
-                    UserProvidedName = formFile.FileName,
-                    Length = formFile.Length,
-                    Type = fileExtension,
-                    Status = VideoStatus.Uploaded
-                };
-
+                Video video = CreateVideoFromIFormFile(formFile);
                 videos.Add(video);
-                fileCreationTasks.Add(_fileService.Create(formFile.OpenReadStream(), video.AssignedName));
+
+                fileCreationTasks.Add(_fileService.Create(formFile.OpenReadStream(), video.GetOriginalFilePath()));
             }
 
             await Task.WhenAll(fileCreationTasks);
@@ -135,38 +150,29 @@ namespace VideoManager.Services
 
         public async Task<Video> Create(IFormFile formFile)
         {
-            Guid guid = Guid.NewGuid();
-            string fileExtension = Path.GetExtension(formFile.FileName);
+            Video video = CreateVideoFromIFormFile(formFile);
 
-            Video video = new Video
-            {
-                Id = guid,
-                AssignedName = $@"Videos\{guid}{fileExtension}",
-                UserProvidedName = formFile.FileName,
-                Length = formFile.Length,
-                Type = fileExtension,
-                Status = VideoStatus.Uploaded
-            };
-
-            await _fileService.Create(formFile.OpenReadStream(), video.AssignedName);
+            await _fileService.Create(formFile.OpenReadStream(), video.GetOriginalFilePath());
             await _videoManagerDbContext.Videos.AddAsync(video);
             await _videoManagerDbContext.SaveChangesAsync();
 
             return video;
         }
 
-        public async Task<List<Video>> GetAll(VideoStatus videoStatus)
+        public async Task<List<Video>> GetAll(VideoStatus? videoStatus)
         {
             return await _videoManagerDbContext.Videos
                 .AsNoTracking()
-                .Where(x => x.Status == videoStatus)
+                .Where(x => !videoStatus.HasValue || x.Status == videoStatus)
                 .ToListAsync();
         }
 
-        public async Task<List<Video>> GetAll()
+        public async Task<List<Guid>> GetAllIds(VideoStatus? videoStatus)
         {
             return await _videoManagerDbContext.Videos
                 .AsNoTracking()
+                .Where(x => !videoStatus.HasValue || x.Status == videoStatus)
+                .Select(x => x.Id)
                 .ToListAsync();
         }
     }
