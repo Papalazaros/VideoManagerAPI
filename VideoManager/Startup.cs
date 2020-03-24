@@ -28,7 +28,7 @@ namespace VideoManager
             services.AddDbContext<VideoManagerDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddScoped<IEncoder, Encoder>();
+            services.AddScoped<IEncoder, FfmpegService>();
 
             services.AddScoped<IFileService, FileService>();
 

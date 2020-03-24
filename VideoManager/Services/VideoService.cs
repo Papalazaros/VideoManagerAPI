@@ -21,6 +21,8 @@ namespace VideoManager.Services
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
         Task<IEnumerable<Video>> DeleteMany(IEnumerable<Guid> videoIds);
         Task<Video> Delete(Guid videoId);
+        Task AssignVideoDuration();
+        Task AssignThumbnail();
     }
 
     public class VideoService : IVideoService
@@ -28,15 +30,71 @@ namespace VideoManager.Services
         private readonly ILogger<VideoService> _logger;
         private readonly VideoManagerDbContext _videoManagerDbContext;
         private readonly IFileService _fileService;
+        private readonly IEncoder _encodingService;
         private static readonly DateTime _encodingCooldown = DateTime.UtcNow.AddMinutes(-30);
 
         public VideoService(ILogger<VideoService> logger,
             VideoManagerDbContext videoManagerDbContext,
-            IFileService fileService)
+            IFileService fileService,
+            IEncoder encodingService)
         {
             _logger = logger;
             _videoManagerDbContext = videoManagerDbContext;
             _fileService = fileService;
+            _encodingService = encodingService;
+        }
+
+        public async Task AssignVideoDuration()
+        {
+            List<Video> videos = await _videoManagerDbContext.Videos
+                .Where(x => x.Status == VideoStatus.Ready && !x.DurationInSeconds.HasValue)
+                .ToListAsync();
+
+            List<Task<int?>> videoDurationTasks = videos
+                .Select(x => _encodingService.GetVideoDurationInSeconds(x.GetEncodedFilePath()))
+                .ToList();
+
+            for (int i = 0; i < videoDurationTasks.Count; i++)
+            {
+                int? taskResult = await videoDurationTasks[i];
+
+                videos[i].DurationInSeconds = taskResult ?? 0;
+            }
+
+            await _videoManagerDbContext.SaveChangesAsync();
+        }
+
+        public async Task AssignThumbnail()
+        {
+            List<Video> videos = await _videoManagerDbContext.Videos
+                .Where(x => x.Status == VideoStatus.Ready && string.IsNullOrEmpty(x.ThumbnailFilePath))
+                .ToListAsync();
+
+            List<Task<string>> videoThumbnailTasks = videos
+                .Select(x => _encodingService.GetThumbnailPath(x))
+                .ToList();
+
+            for (int i = 0; i < videoThumbnailTasks.Count; i++)
+            {
+                videos[i].ThumbnailFilePath = await videoThumbnailTasks[i];
+            }
+
+            await _videoManagerDbContext.SaveChangesAsync();
+        }
+
+        public async Task DeleteOrphanedFiles()
+        {
+            List<Video> videosToRemove = (await _videoManagerDbContext.Videos
+                .Where(x => x.Status == VideoStatus.Ready)
+                .ToListAsync())
+                .Where(x => !File.Exists(x.GetEncodedFilePath()))
+                .ToList();
+
+            if (videosToRemove.Count > 0)
+            {
+                _videoManagerDbContext.RemoveRange(videosToRemove);
+                await _videoManagerDbContext.SaveChangesAsync();
+            }
         }
 
         public async Task<List<Video>> GetVideosToEncode(int count)
@@ -137,7 +195,6 @@ namespace VideoManager.Services
             {
                 Video video = CreateVideoFromIFormFile(formFile);
                 videos.Add(video);
-
                 fileCreationTasks.Add(_fileService.Create(formFile.OpenReadStream(), video.GetOriginalFilePath()));
             }
 

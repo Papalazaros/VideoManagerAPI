@@ -28,6 +28,9 @@ namespace VideoManager.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("DurationInSeconds")
+                        .HasColumnType("int");
+
                     b.Property<TimeSpan?>("EncodeTime")
                         .HasColumnType("time");
 
@@ -51,6 +54,9 @@ namespace VideoManager.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<string>("ThumbnailFilePath")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

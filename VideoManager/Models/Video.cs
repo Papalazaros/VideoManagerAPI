@@ -25,6 +25,10 @@ namespace VideoManager.Models
         [Required]
         public long OriginalLength { get; set; }
 
+        public string ThumbnailFilePath { get; set; }
+
+        public int? DurationInSeconds { get; set; }
+
         public long? EncodedLength { get; set; }
 
         public TimeSpan? EncodeTime { get; set; }

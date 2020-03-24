@@ -68,6 +68,8 @@ namespace VideoManager.Controllers
                 .SelectMany(x => x.Skip(1))
                 .Select(x => x.Id);
 
+            await _videoService.AssignThumbnail();
+            await _videoService.AssignVideoDuration();
             return await _videoService.DeleteMany(duplicateVideoIds);
         }
 
@@ -83,6 +85,20 @@ namespace VideoManager.Controllers
             }
 
             return PhysicalFile(Path.Join(Directory.GetCurrentDirectory(), video.GetEncodedFilePath()), "video/mp4", true);
+        }
+
+        [HttpGet]
+        [Route("{videoId:Guid}/thumbnail")]
+        public async Task<IActionResult> GetThumbnail(Guid videoId)
+        {
+            Video video = await _videoService.Get(videoId);
+
+            if (video == null || video.Status != VideoStatus.Ready)
+            {
+                return NoContent();
+            }
+
+            return PhysicalFile(Path.Join(Directory.GetCurrentDirectory(), video.ThumbnailFilePath), "image/jpeg");
         }
 
         [HttpGet]
