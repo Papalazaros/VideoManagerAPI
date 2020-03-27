@@ -21,8 +21,10 @@ namespace VideoManager.Services
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
         Task<IEnumerable<Video>> DeleteMany(IEnumerable<Guid> videoIds);
         Task<Video> Delete(Guid videoId);
-        Task AssignVideoDuration();
-        Task AssignThumbnail();
+        Task<IEnumerable<Video>> DeleteFailed();
+        Task<IEnumerable<Video>> DeleteOrphaned();
+        Task<IEnumerable<Video>> AssignThumbnails();
+        Task<IEnumerable<Video>> AssignDurations();
     }
 
     public class VideoService : IVideoService
@@ -44,7 +46,7 @@ namespace VideoManager.Services
             _encodingService = encodingService;
         }
 
-        public async Task AssignVideoDuration()
+        public async Task<IEnumerable<Video>> AssignDurations()
         {
             List<Video> videos = await _videoManagerDbContext.Videos
                 .Where(x => x.Status == VideoStatus.Ready && !x.DurationInSeconds.HasValue)
@@ -62,16 +64,18 @@ namespace VideoManager.Services
             }
 
             await _videoManagerDbContext.SaveChangesAsync();
+
+            return videos;
         }
 
-        public async Task AssignThumbnail()
+        public async Task<IEnumerable<Video>> AssignThumbnails()
         {
             List<Video> videos = await _videoManagerDbContext.Videos
                 .Where(x => x.Status == VideoStatus.Ready && string.IsNullOrEmpty(x.ThumbnailFilePath))
                 .ToListAsync();
 
             List<Task<string>> videoThumbnailTasks = videos
-                .Select(x => _encodingService.GetThumbnailPath(x))
+                .Select(x => _encodingService.CreateThumbnail(x))
                 .ToList();
 
             for (int i = 0; i < videoThumbnailTasks.Count; i++)
@@ -80,21 +84,34 @@ namespace VideoManager.Services
             }
 
             await _videoManagerDbContext.SaveChangesAsync();
+
+            return videos;
         }
 
-        public async Task DeleteOrphanedFiles()
+        public async Task<IEnumerable<Video>> DeleteFailed()
         {
-            List<Video> videosToRemove = (await _videoManagerDbContext.Videos
-                .Where(x => x.Status == VideoStatus.Ready)
-                .ToListAsync())
-                .Where(x => !File.Exists(x.GetEncodedFilePath()))
+            List<Guid> videoIdsToRemove = await _videoManagerDbContext.Videos
+                    .Where(x => x.Status == VideoStatus.Failed)
+                    .Select(x => x.Id)
+                    .ToListAsync();
+
+            return await DeleteMany(videoIdsToRemove);
+        }
+
+        public async Task<IEnumerable<Video>> DeleteOrphaned()
+        {
+            List<Guid> videoIdsToRemove =
+                (
+                await _videoManagerDbContext.Videos
+                    .Where(x => x.Status == VideoStatus.Ready)
+                    .Select(x => new { x.Id, EncodedFilePath = x.GetEncodedFilePath() })
+                    .ToListAsync()
+                )
+                .Where(x => !File.Exists(x.EncodedFilePath))
+                .Select(x => x.Id)
                 .ToList();
 
-            if (videosToRemove.Count > 0)
-            {
-                _videoManagerDbContext.RemoveRange(videosToRemove);
-                await _videoManagerDbContext.SaveChangesAsync();
-            }
+            return await DeleteMany(videoIdsToRemove);
         }
 
         public async Task<List<Video>> GetVideosToEncode(int count)

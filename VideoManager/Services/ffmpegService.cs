@@ -11,7 +11,7 @@ namespace VideoManager.Services
     {
         Task<EncodeResult> Encode(Video video);
         Task<int?> GetVideoDurationInSeconds(string path);
-        Task<string> GetThumbnailPath(Video video);
+        Task<string> CreateThumbnail(Video video);
     }
 
     public class FfmpegService : IEncoder
@@ -82,14 +82,8 @@ namespace VideoManager.Services
                 string arguments = $"-loglevel error -i {video.GetOriginalFilePath()} -c:v libx264 -filter_complex \"scale = iw * min(1\\, min(1920 / iw\\, 1280 / ih)):-2\" -b:v 2M -maxrate 2M -bufsize 1M -c:a copy -preset medium -crf 26 -y -threads 1 {encodedFilePath}";
                 (string standardOutput, string standardError) = await RunCommandAsync(arguments);
 
-                if (string.IsNullOrEmpty(standardError))
-                {
-                    encodeResult.Success = true;
-                }
-                else
-                {
-                    _logger.LogError("Error in ffmpeg process {ErrorMessage}", standardError);
-                }
+                if (string.IsNullOrEmpty(standardError)) encodeResult.Success = true;
+                else _logger.LogError("Error in ffmpeg process {ErrorMessage}", standardError);
             }
             catch (Exception e)
             {
@@ -99,11 +93,7 @@ namespace VideoManager.Services
             if (encodeResult.Success)
             {
                 encodeResult.Success = _fileService.Move(encodedFilePath, video);
-
-                if (encodeResult.Success)
-                {
-                    encodeResult.EncodedFileLength = new FileInfo(video.GetEncodedFilePath()).Length;
-                }
+                if (encodeResult.Success) encodeResult.EncodedFileLength = new FileInfo(video.GetEncodedFilePath()).Length;
             }
 
             stopWatch.Stop();
@@ -123,30 +113,24 @@ namespace VideoManager.Services
                 string command = $"-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration \"{path}\"";
                 (string standardOutput, string standardError) = await RunCommandAsync(command, "ffprobe.exe");
 
-                if (string.IsNullOrEmpty(standardError) && double.TryParse(standardOutput, out double parsedValue))
-                {
-                    return (int)parsedValue;
-                }
+                if (string.IsNullOrEmpty(standardError) && double.TryParse(standardOutput, out double parsedValue)) return (int)parsedValue;
             }
 
             return null;
         }
 
-        public async Task<string> GetThumbnailPath(Video video)
+        public async Task<string> CreateThumbnail(Video video)
         {
             string encodedFilePath = video.GetEncodedFilePath();
 
             if (File.Exists(encodedFilePath))
             {
                 string outputThumbnailPath = Path.Combine(Path.GetDirectoryName(encodedFilePath), video.Id + ".jpg");
-                string command = $"-loglevel error -i {encodedFilePath} -vf \"thumbnail,scale = 640:-2\" -frames:v 1 {outputThumbnailPath}";
+                string command = $"-loglevel error -i {encodedFilePath} -vf \"thumbnail,scale = 320:-2\" -frames:v 1 {outputThumbnailPath}";
 
                 (string _, string standardError) = await RunCommandAsync(command);
 
-                if (string.IsNullOrEmpty(standardError))
-                {
-                    return outputThumbnailPath;
-                }
+                if (string.IsNullOrEmpty(standardError)) return outputThumbnailPath;
             }
 
             return null;

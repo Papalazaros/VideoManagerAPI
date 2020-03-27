@@ -2,26 +2,27 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace VideoManager.Services
 {
+    /// <summary>
+    /// Executes tasks with an increasing delay if no work is found
+    /// </summary>
     public abstract class BackgroundTaskService : BackgroundService
     {
         // Dependencies
-        private readonly ILogger<BackgroundTaskService> _logger;
-        private readonly IServiceScopeFactory _scopeFactory;        
+        protected readonly ILogger _logger;
+        protected readonly IServiceScopeFactory _scopeFactory;
 
         // Polling
         private const int _defaultPollingInterval = 15;
         private const int _maxPollingInterval = 300;
         private const int _pollingIntervalIncreaseRate = 2;
-        private static int _pollingInterval = _defaultPollingInterval;
+        private int _pollingInterval = _defaultPollingInterval;
 
-        protected BackgroundTaskService(ILogger<BackgroundTaskService> logger, IServiceScopeFactory scopeFactory)
+        protected BackgroundTaskService(ILogger logger, IServiceScopeFactory scopeFactory)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
@@ -29,28 +30,28 @@ namespace VideoManager.Services
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            TimeSpan _timeToCheckInterval = TimeSpan.FromSeconds(_pollingInterval);
-
             while (!cancellationToken.IsCancellationRequested)
             {
-                bool workCompleted = await DoWork(_logger, _scopeFactory);
+                bool workCompleted = await DoWork();
 
-                if (workCompleted)
+                if (workCompleted && _pollingInterval != _defaultPollingInterval)
                 {
                     _pollingInterval = _defaultPollingInterval;
                 }
-                else
+                else if (!workCompleted)
                 {
-                    _logger.LogInformation(
-                        "No tasks to completed. Sleeping for {_pollingInterval} seconds.", _timeToCheckInterval.TotalSeconds);
+                    TimeSpan _timeToCheckInterval = TimeSpan.FromSeconds(_pollingInterval);
 
-                    _pollingInterval = Math.Min(_maxPollingInterval, _pollingInterval * _pollingIntervalIncreaseRate);
+                    _logger.LogInformation(
+                        "No tasks found. Sleeping for {_pollingInterval} seconds.", _timeToCheckInterval.TotalSeconds);
 
                     await Task.Delay(_timeToCheckInterval);
+
+                    _pollingInterval = Math.Min(_maxPollingInterval, _pollingInterval * _pollingIntervalIncreaseRate);
                 }
             }
         }
 
-        public abstract Task<bool> DoWork(ILogger<BackgroundTaskService> logger, IServiceScopeFactory scopeFactory);
+        public abstract Task<bool> DoWork();
     }
 }

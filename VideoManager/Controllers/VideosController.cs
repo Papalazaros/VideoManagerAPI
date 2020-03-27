@@ -1,7 +1,9 @@
 ﻿using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,15 +21,22 @@ namespace VideoManager.Controllers
     {
         private readonly ILogger<VideosController> _logger;
         private readonly IVideoService _videoService;
+        private readonly IVideoSyncService _videoSyncService;
+        private readonly IMemoryCache _memoryCache;
 
-        public VideosController(ILogger<VideosController> logger, IVideoService videoService)
+        public VideosController(ILogger<VideosController> logger,
+            IVideoService videoService,
+            IVideoSyncService videoSyncService,
+            IMemoryCache memoryCache)
         {
             _logger = logger;
             _videoService = videoService;
+            _videoSyncService = videoSyncService;
+            _memoryCache = memoryCache;
         }
 
         [HttpGet]
-        [Route("random")]
+        [Route("Random")]
         public async Task<List<Video>> GetRandomVideoId(int count)
         {
             return await _videoService.GetRandom(count);
@@ -46,59 +55,38 @@ namespace VideoManager.Controllers
             return await _videoService.Delete(videoId);
         }
 
-        [HttpDelete]
-        [Route("deletefailed")]
-        public async Task<IEnumerable<Video>> DeleteFailedFiles()
-        {
-            List<Video> failedVideos = await _videoService
-                .GetAll(VideoStatus.Failed);
-
-            return await _videoService.DeleteMany(failedVideos.Select(x => x.Id));
-        }
-
-        [HttpDelete]
-        [Route("deleteduplicates")]
-        public async Task<IEnumerable<Video>> DeleteDuplicateFiles()
-        {
-            List<Video> videos = await _videoService.GetAll();
-
-            IEnumerable<Guid> duplicateVideoIds = videos
-                .GroupBy(x => x.OriginalFileName)
-                .Where(x => x.Count() > 1)
-                .SelectMany(x => x.Skip(1))
-                .Select(x => x.Id);
-
-            await _videoService.AssignThumbnail();
-            await _videoService.AssignVideoDuration();
-            return await _videoService.DeleteMany(duplicateVideoIds);
-        }
-
         [HttpGet]
-        [Route("{videoId:Guid}/stream")]
+        [Route("{videoId:Guid}/Stream")]
         public async Task<IActionResult> GetStream(Guid videoId)
         {
-            Video video = await _videoService.Get(videoId);
+            var reqestedRange = HttpContext.Request.GetTypedHeaders().Range?.Ranges;
 
-            if (video == null || video.Status != VideoStatus.Ready)
+            if (reqestedRange == null) return BadRequest();
+
+            if (!_memoryCache.TryGetValue("VIDEO:" + videoId, out string videoPath))
             {
-                return NoContent();
+                Video video = await _videoService.Get(videoId);
+                videoPath = Path.Join(Directory.GetCurrentDirectory(), video?.GetEncodedFilePath());
+                if (string.IsNullOrEmpty(videoPath)) return NoContent();
+                else _memoryCache.Set("VIDEO:" + videoId, videoPath);
             }
 
-            return PhysicalFile(Path.Join(Directory.GetCurrentDirectory(), video.GetEncodedFilePath()), "video/mp4", true);
+            return PhysicalFile(videoPath, "video/mp4", true);
         }
 
         [HttpGet]
-        [Route("{videoId:Guid}/thumbnail")]
+        [Route("{videoId:Guid}/Thumbnail")]
         public async Task<IActionResult> GetThumbnail(Guid videoId)
         {
-            Video video = await _videoService.Get(videoId);
-
-            if (video == null || video.Status != VideoStatus.Ready)
+            if (!_memoryCache.TryGetValue("THUMBNAIL:" + videoId, out string thumbnailPath))
             {
-                return NoContent();
+                Video video = await _videoService.Get(videoId);
+                thumbnailPath = Path.Join(Directory.GetCurrentDirectory(), video?.ThumbnailFilePath);
+                if (string.IsNullOrEmpty(thumbnailPath)) return NoContent();
+                else _memoryCache.Set("THUMBNAIL:" + videoId, thumbnailPath);
             }
 
-            return PhysicalFile(Path.Join(Directory.GetCurrentDirectory(), video.ThumbnailFilePath), "image/jpeg");
+            return PhysicalFile(thumbnailPath, "image/jpeg");
         }
 
         [HttpGet]
@@ -109,9 +97,11 @@ namespace VideoManager.Controllers
         }
 
         [HttpPost]
-        [Route("createmany")]
+        [Route("CreateMany")]
         public async Task<IActionResult> Post(IEnumerable<IFormFile> files)
         {
+            if (files == null) return BadRequest();
+
             Dictionary<string, IList<ValidationFailure>> failedFiles = new Dictionary<string, IList<ValidationFailure>>(9);
             VideoValidator videoValidator = new VideoValidator();
 
@@ -119,10 +109,7 @@ namespace VideoManager.Controllers
             {
                 ValidationResult validationResult = videoValidator.Validate(file);
 
-                if (!validationResult.IsValid)
-                {
-                    failedFiles[file.FileName] = validationResult.Errors;
-                }
+                if (!validationResult.IsValid) failedFiles[file.FileName] = validationResult.Errors;
             }
 
             IEnumerable<IFormFile> validVideos = files.Where(x => !failedFiles.ContainsKey(x.FileName));
@@ -132,15 +119,23 @@ namespace VideoManager.Controllers
         }
 
         [HttpPost]
+        [Route("Sync")]
+        public async Task<IActionResult> Post(VideoSyncMessage videoSyncMessage)
+        {
+            await _videoSyncService.SyncVideoAsync(videoSyncMessage);
+
+            return Ok();
+        }
+
+        [HttpPost]
         public async Task<IActionResult> Post(IFormFile file)
         {
+            if (file == null) return BadRequest();
+
             VideoValidator videoValidator = new VideoValidator();
             ValidationResult validationResult = videoValidator.Validate(file);
 
-            if (!validationResult.IsValid)
-            {
-                return new BadRequestObjectResult(validationResult.Errors);
-            }
+            if (!validationResult.IsValid) return new BadRequestObjectResult(validationResult.Errors);
 
             return Ok(await _videoService.Create(file));
         }

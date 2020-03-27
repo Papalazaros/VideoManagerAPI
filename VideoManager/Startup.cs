@@ -28,18 +28,32 @@ namespace VideoManager
             services.AddDbContext<VideoManagerDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddMemoryCache();
+
             services.AddScoped<IEncoder, FfmpegService>();
 
             services.AddScoped<IFileService, FileService>();
 
             services.AddScoped<IVideoService, VideoService>();
 
+            services.AddSingleton<IVideoSyncService, VideoSyncService>();
+
             services.AddHostedService<EncodingService>();
 
-            services.AddCors(c =>
+            services.AddHostedService<VideoBackgroundService>();
+
+            services.AddSignalR().AddJsonProtocol(opts =>
             {
-                c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin());
+                opts.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
+
+            services.AddCors(o => o.AddPolicy("CorsPolicy", builder => {
+                builder
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials()
+                    .WithOrigins("http://localhost:8080", "http://localhost:80");
+            }));
 
             services.Configure<FormOptions>(options =>
             {
@@ -79,16 +93,17 @@ namespace VideoManager
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "VideoManager");
             });
 
-            app.UseCors("AllowOrigin");
+            app.UseCors("CorsPolicy");
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseRouting();
 
-            app.UseAuthorization();
+            //app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapHub<VideoHub>("/videoHub");
                 endpoints.MapControllers();
             });
         }
