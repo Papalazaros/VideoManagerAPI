@@ -10,7 +10,7 @@ namespace VideoManager.Models
         public Guid Id { get; set; }
 
         [Required]
-        public string RoomName { get; set; }
+        public string Name { get; set; }
 
         public Guid? OwnerId { get; set; }
         public User Owner { get; set; }

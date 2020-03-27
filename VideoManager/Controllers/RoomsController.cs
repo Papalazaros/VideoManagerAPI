@@ -32,11 +32,17 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{roomId:Guid}/Videos")]
-        public async Task<IActionResult> Get(Guid roomId)
+        public async Task<IActionResult> GetRoomVideos(Guid roomId)
         {
             List<Video> allVideos = await _videoService.GetAll();
 
             return Ok(await _videoManagerDbContext.Rooms.Include(x => x.Videos).FirstOrDefaultAsync(x => x.Id == roomId));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Get(Guid userId)
+        {
+            return Ok(await _videoManagerDbContext.Rooms.Where(x => x.CreatedById == userId).ToListAsync());
         }
 
         [HttpPost]
