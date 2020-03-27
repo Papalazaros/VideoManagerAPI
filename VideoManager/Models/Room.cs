@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace VideoManager.Models
 {
@@ -11,7 +9,11 @@ namespace VideoManager.Models
         [Key]
         public Guid Id { get; set; }
 
-        public Guid? Owner { get; set; }
+        [Required]
+        public string RoomName { get; set; }
+
+        public Guid? OwnerId { get; set; }
+        public User Owner { get; set; }
 
         [Required]
         public bool IsPrivate { get; set; } = true;
@@ -19,7 +21,7 @@ namespace VideoManager.Models
         [Required]
         public Guid CreatedById { get; set; }
         [Required]
-        public User CreatedByUser { get; set; }
+        public User CreatedBy { get; set; }
 
         public ICollection<Video> Videos { get; set; }
     }

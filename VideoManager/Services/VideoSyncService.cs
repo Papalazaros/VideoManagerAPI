@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading.Tasks;
 using VideoManager.Models;
 
@@ -7,7 +8,7 @@ namespace VideoManager.Services
 {
     public interface IVideoSyncService
     {
-        Task SyncVideoAsync(VideoSyncMessage videoSyncMessage);
+        Task SyncVideoAsync(Guid roomId, VideoSyncMessage videoSyncMessage);
     }
 
     public class VideoSyncService : IVideoSyncService
@@ -21,9 +22,9 @@ namespace VideoManager.Services
             _videoHub = videoHub;
         }
 
-        public async Task SyncVideoAsync(VideoSyncMessage videoSyncMessage)
+        public async Task SyncVideoAsync(Guid roomId, VideoSyncMessage videoSyncMessage)
         {
-            await _videoHub.Clients.All.SendAsync("VideoSyncMessage", videoSyncMessage);
+            await _videoHub.Clients.Group(roomId.ToString()).SendAsync("VideoSyncMessage", videoSyncMessage);
         }
     }
 }

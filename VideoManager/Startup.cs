@@ -52,7 +52,7 @@ namespace VideoManager
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials()
-                    .WithOrigins("http://localhost:8080", "http://localhost:80");
+                    .WithOrigins("http://localhost:8080", "http://localhost");
             }));
 
             services.Configure<FormOptions>(options =>

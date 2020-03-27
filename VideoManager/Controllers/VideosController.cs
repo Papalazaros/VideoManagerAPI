@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -116,15 +115,6 @@ namespace VideoManager.Controllers
             List<Video> createdVideos = await _videoService.CreateMany(validVideos);
 
             return Ok(new { failed = failedFiles, created = createdVideos });
-        }
-
-        [HttpPost]
-        [Route("Sync")]
-        public async Task<IActionResult> Post(VideoSyncMessage videoSyncMessage)
-        {
-            await _videoSyncService.SyncVideoAsync(videoSyncMessage);
-
-            return Ok();
         }
 
         [HttpPost]

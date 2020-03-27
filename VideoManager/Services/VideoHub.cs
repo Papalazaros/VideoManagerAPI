@@ -1,14 +1,13 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Threading.Tasks;
-using VideoManager.Models;
 
 namespace VideoManager.Services
 {
     public class VideoHub : Hub
     {
-        //public async Task ReceiveSyncMessage(VideoSyncMessage videoSyncRequest)
-        //{
-        //    await Clients.All.SendAsync("VideoSyncMessage", videoSyncRequest);
-        //}
+        public async Task JoinRoom(string roomName)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomName);
+        }
     }
 }
