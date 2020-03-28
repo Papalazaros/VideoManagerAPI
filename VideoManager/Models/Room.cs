@@ -7,7 +7,7 @@ namespace VideoManager.Models
     public class Room
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid RoomId { get; set; }
 
         [Required]
         public string Name { get; set; }
@@ -23,6 +23,6 @@ namespace VideoManager.Models
         [Required]
         public User CreatedBy { get; set; }
 
-        public ICollection<Video> Videos { get; set; }
+        public ICollection<RoomVideo> RoomVideos { get; set; }
     }
 }

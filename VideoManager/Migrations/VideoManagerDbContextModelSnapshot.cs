@@ -21,7 +21,7 @@ namespace VideoManager.Migrations
 
             modelBuilder.Entity("VideoManager.Models.Room", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("RoomId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
@@ -31,14 +31,14 @@ namespace VideoManager.Migrations
                     b.Property<bool>("IsPrivate")
                         .HasColumnType("bit");
 
-                    b.Property<Guid?>("OwnerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("RoomName")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<Guid?>("OwnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("RoomId");
 
                     b.HasIndex("CreatedById");
 
@@ -47,20 +47,39 @@ namespace VideoManager.Migrations
                     b.ToTable("Rooms");
                 });
 
+            modelBuilder.Entity("VideoManager.Models.RoomVideo", b =>
+                {
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("VideoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("RoomId", "VideoId");
+
+                    b.HasIndex("VideoId");
+
+                    b.ToTable("RoomVideos");
+                });
+
             modelBuilder.Entity("VideoManager.Models.User", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("Id");
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId");
 
                     b.ToTable("Users");
                 });
 
             modelBuilder.Entity("VideoManager.Models.Video", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("VideoId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
@@ -91,18 +110,18 @@ namespace VideoManager.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("RoomId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<string>("ThumbnailFilePath")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.HasIndex("RoomId");
+                    b.HasKey("VideoId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Videos");
                 });
@@ -120,11 +139,28 @@ namespace VideoManager.Migrations
                         .HasForeignKey("OwnerId");
                 });
 
+            modelBuilder.Entity("VideoManager.Models.RoomVideo", b =>
+                {
+                    b.HasOne("VideoManager.Models.Room", "Room")
+                        .WithMany("RoomVideos")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VideoManager.Models.Video", "Video")
+                        .WithMany("RoomVideos")
+                        .HasForeignKey("VideoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("VideoManager.Models.Video", b =>
                 {
-                    b.HasOne("VideoManager.Models.Room", null)
+                    b.HasOne("VideoManager.Models.User", "User")
                         .WithMany("Videos")
-                        .HasForeignKey("RoomId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

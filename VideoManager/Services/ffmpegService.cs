@@ -125,7 +125,7 @@ namespace VideoManager.Services
 
             if (File.Exists(encodedFilePath))
             {
-                string outputThumbnailPath = Path.Combine(Path.GetDirectoryName(encodedFilePath), video.Id + ".jpg");
+                string outputThumbnailPath = Path.Combine(Path.GetDirectoryName(encodedFilePath), video.VideoId + ".jpg");
                 string command = $"-loglevel error -i {encodedFilePath} -vf \"thumbnail,scale = 320:-2\" -frames:v 1 {outputThumbnailPath}";
 
                 (string _, string standardError) = await RunCommandAsync(command);

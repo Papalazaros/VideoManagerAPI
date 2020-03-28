@@ -47,6 +47,12 @@ namespace VideoManager.Controllers
             return await _videoService.GetAll(videoStatus);
         }
 
+        [HttpGet]
+        public async Task<List<Video>> GetAllVideos(Guid roomId)
+        {
+            return await _videoService.GetAllByRoomId(roomId);
+        }
+
         [HttpDelete]
         [Route("{videoId:Guid}")]
         public async Task<Video> Delete(Guid videoId)

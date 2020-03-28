@@ -14,6 +14,7 @@ namespace VideoManager.Services
     {
         Task<List<Video>> GetAll(VideoStatus? videoStatus = null);
         Task<List<Guid>> GetAllIds(VideoStatus? videoStatus = null);
+        Task<List<Video>> GetAllByRoomId(Guid roomId);
         Task<Video> Get(Guid videoId);
         Task<List<Video>> GetRandom(int count);
         Task<List<Video>> GetVideosToEncode(int count);
@@ -44,6 +45,14 @@ namespace VideoManager.Services
             _videoManagerDbContext = videoManagerDbContext;
             _fileService = fileService;
             _encodingService = encodingService;
+        }
+
+        public async Task<List<Video>> GetAllByRoomId(Guid roomId)
+        {
+            return await _videoManagerDbContext.RoomVideos
+              .Where(x => x.RoomId == roomId)
+              .Join(_videoManagerDbContext.Videos, x => x.VideoId, x => x.VideoId, (videoId, Video) => Video)
+              .ToListAsync();
         }
 
         public async Task<IEnumerable<Video>> AssignDurations()
@@ -92,7 +101,7 @@ namespace VideoManager.Services
         {
             List<Guid> videoIdsToRemove = await _videoManagerDbContext.Videos
                     .Where(x => x.Status == VideoStatus.Failed)
-                    .Select(x => x.Id)
+                    .Select(x => x.VideoId)
                     .ToListAsync();
 
             return await DeleteMany(videoIdsToRemove);
@@ -104,11 +113,11 @@ namespace VideoManager.Services
                 (
                 await _videoManagerDbContext.Videos
                     .Where(x => x.Status == VideoStatus.Ready)
-                    .Select(x => new { x.Id, EncodedFilePath = x.GetEncodedFilePath() })
+                    .Select(x => new { x.VideoId, EncodedFilePath = x.GetEncodedFilePath() })
                     .ToListAsync()
                 )
                 .Where(x => !File.Exists(x.EncodedFilePath))
-                .Select(x => x.Id)
+                .Select(x => x.VideoId)
                 .ToList();
 
             return await DeleteMany(videoIdsToRemove);
@@ -175,7 +184,7 @@ namespace VideoManager.Services
                 if (video != null)
                 {
                     videosToDelete.Add(video);
-                    deletedVideoIds.Add(video.Id);
+                    deletedVideoIds.Add(video.VideoId);
                 }
             }
 
@@ -195,7 +204,7 @@ namespace VideoManager.Services
 
             return new Video
             {
-                Id = guid,
+                VideoId = guid,
                 OriginalFileName = formFile.FileName,
                 OriginalLength = formFile.Length,
                 OriginalType = fileExtension,
@@ -246,7 +255,7 @@ namespace VideoManager.Services
             return await _videoManagerDbContext.Videos
                 .AsNoTracking()
                 .Where(x => !videoStatus.HasValue || x.Status == videoStatus)
-                .Select(x => x.Id)
+                .Select(x => x.VideoId)
                 .ToListAsync();
         }
     }

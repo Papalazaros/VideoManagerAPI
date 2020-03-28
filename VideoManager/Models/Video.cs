@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace VideoManager.Models
@@ -8,7 +9,7 @@ namespace VideoManager.Models
         public const string Directory = "Videos";
 
         [Key]
-        public Guid Id { get; set; }
+        public Guid VideoId { get; set; }
 
         [Required]
         public string OriginalFileName { get; set; }
@@ -33,22 +34,28 @@ namespace VideoManager.Models
 
         public TimeSpan? EncodeTime { get; set; }
 
+        public ICollection<RoomVideo> RoomVideos { get; set; }
+
+        public Guid UserId { get; set; }
+
+        public User User { get; set; }
+
         [Required]
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
         public string GetOriginalFilePath()
         {
-            return $@"{Directory}\{Id}{OriginalType}";
+            return $@"{Directory}\{VideoId}{OriginalType}";
         }
 
         public string GetEncodedFilePath()
         {
-            return $@"{Directory}\{Id}{EncodedType}";
+            return $@"{Directory}\{VideoId}{EncodedType}";
         }
 
         public override string ToString()
         {
-            return $@"Guid: {Id}
+            return $@"Guid: {VideoId}
                      OriginalFileName: {OriginalFileName}
                      Status: {Status}
                      OriginalType: {OriginalType}

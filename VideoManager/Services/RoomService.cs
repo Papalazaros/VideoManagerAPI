@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ namespace VideoManager.Services
     public interface IRoomService
     {
         Task<Room> Get(Guid id);
+        Task<IEnumerable<Room>> GetAll(Guid userId);
     }
 
     public class RoomService : IRoomService
@@ -23,6 +25,11 @@ namespace VideoManager.Services
         public async Task<Room> Get(Guid roomId)
         {
             return await _videoManagerDbContext.Rooms.FindAsync(roomId);
+        }
+
+        public async Task<IEnumerable<Room>> GetAll(Guid userId)
+        {
+            return await _videoManagerDbContext.Rooms.Where(x => x.CreatedById == userId).ToListAsync();
         }
     }
 }
