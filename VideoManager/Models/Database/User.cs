@@ -8,10 +8,6 @@ namespace VideoManager.Models
     {
         [Key]
         public Guid UserId { get; set; }
-
-        [Required]
-        public string Email { get; set; }
-
-        public ICollection<Video> Videos { get; set; }
+        public string Auth0Id { get; set; }
     }
 }

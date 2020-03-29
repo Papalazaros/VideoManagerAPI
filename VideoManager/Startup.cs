@@ -1,14 +1,19 @@
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using System.Security.Claims;
 using System.Text.Json.Serialization;
+using VideoManager.Middleware;
 using VideoManager.Services;
 
 namespace VideoManager
@@ -25,18 +30,22 @@ namespace VideoManager
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHttpContextAccessor();
+
             services.AddDbContext<VideoManagerDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddMemoryCache();
+
+            services.AddHttpClient<IAuth0Service, Auth0Service>();
+
+            services.AddScoped<IUserService, UserService>();
 
             services.AddScoped<IEncoder, FfmpegService>();
 
             services.AddScoped<IFileService, FileService>();
 
             services.AddScoped<IVideoService, VideoService>();
-
-            services.AddSingleton<IVideoSyncService, VideoSyncService>();
 
             services.AddHostedService<EncodingService>();
 
@@ -88,18 +97,15 @@ namespace VideoManager
 
             app.UseSwagger();
 
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "VideoManager");
-            });
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "VideoManager"));
 
             app.UseCors("CorsPolicy");
 
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
+
+            app.UseMiddleware(typeof(RequestMiddleware));
 
             app.UseRouting();
-
-            //app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

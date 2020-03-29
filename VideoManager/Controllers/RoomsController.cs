@@ -1,11 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using VideoManager.Models;
 using VideoManager.Services;
 
 namespace VideoManager.Controllers
@@ -25,9 +22,9 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get(Guid userId)
+        public async Task<IActionResult> Get()
         {
-            return Ok(await _roomService.GetAll(userId));
+            return Ok(await _roomService.GetAll());
         }
     }
 }

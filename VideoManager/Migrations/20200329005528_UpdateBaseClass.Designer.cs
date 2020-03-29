@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VideoManager;
 
 namespace VideoManager.Migrations
 {
     [DbContext(typeof(VideoManagerDbContext))]
-    partial class VideoManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200329005528_UpdateBaseClass")]
+    partial class UpdateBaseClass
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,13 +27,19 @@ namespace VideoManager.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CreatedByUserUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ModifiedByUserUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("ModifiedDate")
@@ -42,9 +50,9 @@ namespace VideoManager.Migrations
 
                     b.HasKey("PlaylistId");
 
-                    b.HasIndex("CreatedByUserId");
+                    b.HasIndex("CreatedByUserUserId");
 
-                    b.HasIndex("ModifiedByUserId");
+                    b.HasIndex("ModifiedByUserUserId");
 
                     b.HasIndex("RoomId")
                         .IsUnique();
@@ -73,7 +81,10 @@ namespace VideoManager.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CreatedByUserUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("CreatedDate")
@@ -82,7 +93,10 @@ namespace VideoManager.Migrations
                     b.Property<bool>("IsPrivate")
                         .HasColumnType("bit");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ModifiedByUserUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("ModifiedDate")
@@ -99,9 +113,9 @@ namespace VideoManager.Migrations
 
                     b.HasKey("RoomId");
 
-                    b.HasIndex("CreatedByUserId");
+                    b.HasIndex("CreatedByUserUserId");
 
-                    b.HasIndex("ModifiedByUserId");
+                    b.HasIndex("ModifiedByUserUserId");
 
                     b.HasIndex("OwnerId");
 
@@ -128,7 +142,10 @@ namespace VideoManager.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CreatedByUserUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("CreatedDate")
@@ -146,7 +163,10 @@ namespace VideoManager.Migrations
                     b.Property<string>("EncodedType")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ModifiedByUserUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("ModifiedDate")
@@ -169,9 +189,9 @@ namespace VideoManager.Migrations
 
                     b.HasKey("VideoId");
 
-                    b.HasIndex("CreatedByUserId");
+                    b.HasIndex("CreatedByUserUserId");
 
-                    b.HasIndex("ModifiedByUserId");
+                    b.HasIndex("ModifiedByUserUserId");
 
                     b.ToTable("Videos");
                 });
@@ -180,11 +200,11 @@ namespace VideoManager.Migrations
                 {
                     b.HasOne("VideoManager.Models.User", "CreatedByUser")
                         .WithMany()
-                        .HasForeignKey("CreatedByUserId");
+                        .HasForeignKey("CreatedByUserUserId");
 
                     b.HasOne("VideoManager.Models.User", "ModifiedByUser")
                         .WithMany()
-                        .HasForeignKey("ModifiedByUserId");
+                        .HasForeignKey("ModifiedByUserUserId");
 
                     b.HasOne("VideoManager.Models.Room", "Room")
                         .WithOne("Playlist")
@@ -212,11 +232,11 @@ namespace VideoManager.Migrations
                 {
                     b.HasOne("VideoManager.Models.User", "CreatedByUser")
                         .WithMany()
-                        .HasForeignKey("CreatedByUserId");
+                        .HasForeignKey("CreatedByUserUserId");
 
                     b.HasOne("VideoManager.Models.User", "ModifiedByUser")
                         .WithMany()
-                        .HasForeignKey("ModifiedByUserId");
+                        .HasForeignKey("ModifiedByUserUserId");
 
                     b.HasOne("VideoManager.Models.User", "Owner")
                         .WithMany()
@@ -227,11 +247,11 @@ namespace VideoManager.Migrations
                 {
                     b.HasOne("VideoManager.Models.User", "CreatedByUser")
                         .WithMany()
-                        .HasForeignKey("CreatedByUserId");
+                        .HasForeignKey("CreatedByUserUserId");
 
                     b.HasOne("VideoManager.Models.User", "ModifiedByUser")
                         .WithMany()
-                        .HasForeignKey("ModifiedByUserId");
+                        .HasForeignKey("ModifiedByUserUserId");
                 });
 #pragma warning restore 612, 618
         }

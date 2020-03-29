@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VideoManager;
 
 namespace VideoManager.Migrations
 {
     [DbContext(typeof(VideoManagerDbContext))]
-    partial class VideoManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200328165112_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -19,20 +21,48 @@ namespace VideoManager.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+            modelBuilder.Entity("VideoManager.Models.Library", b =>
+                {
+                    b.Property<Guid>("LibraryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("ModifiedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("LibraryId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Libraries");
+                });
+
             modelBuilder.Entity("VideoManager.Models.Playlist", b =>
                 {
                     b.Property<Guid>("PlaylistId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid?>("ModifiedByUserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("ModifiedDate")
                         .HasColumnType("datetimeoffset");
@@ -41,10 +71,6 @@ namespace VideoManager.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("PlaylistId");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("ModifiedByUserId");
 
                     b.HasIndex("RoomId")
                         .IsUnique();
@@ -73,8 +99,8 @@ namespace VideoManager.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("CreatedDate")
                         .HasColumnType("datetimeoffset");
@@ -82,8 +108,8 @@ namespace VideoManager.Migrations
                     b.Property<bool>("IsPrivate")
                         .HasColumnType("bit");
 
-                    b.Property<Guid?>("ModifiedByUserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("ModifiedDate")
                         .HasColumnType("datetimeoffset");
@@ -99,10 +125,6 @@ namespace VideoManager.Migrations
 
                     b.HasKey("RoomId");
 
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("ModifiedByUserId");
-
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Rooms");
@@ -117,7 +139,12 @@ namespace VideoManager.Migrations
                     b.Property<string>("Auth0Id")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("LibraryId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("UserId");
+
+                    b.HasIndex("LibraryId");
 
                     b.ToTable("Users");
                 });
@@ -128,8 +155,8 @@ namespace VideoManager.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("CreatedDate")
                         .HasColumnType("datetimeoffset");
@@ -146,8 +173,11 @@ namespace VideoManager.Migrations
                     b.Property<string>("EncodedType")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid?>("LibraryId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("ModifiedDate")
                         .HasColumnType("datetimeoffset");
@@ -169,23 +199,20 @@ namespace VideoManager.Migrations
 
                     b.HasKey("VideoId");
 
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("ModifiedByUserId");
+                    b.HasIndex("LibraryId");
 
                     b.ToTable("Videos");
                 });
 
+            modelBuilder.Entity("VideoManager.Models.Library", b =>
+                {
+                    b.HasOne("VideoManager.Models.User", null)
+                        .WithMany("Libraries")
+                        .HasForeignKey("UserId");
+                });
+
             modelBuilder.Entity("VideoManager.Models.Playlist", b =>
                 {
-                    b.HasOne("VideoManager.Models.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId");
-
-                    b.HasOne("VideoManager.Models.User", "ModifiedByUser")
-                        .WithMany()
-                        .HasForeignKey("ModifiedByUserId");
-
                     b.HasOne("VideoManager.Models.Room", "Room")
                         .WithOne("Playlist")
                         .HasForeignKey("VideoManager.Models.Playlist", "RoomId")
@@ -210,28 +237,25 @@ namespace VideoManager.Migrations
 
             modelBuilder.Entity("VideoManager.Models.Room", b =>
                 {
-                    b.HasOne("VideoManager.Models.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId");
-
-                    b.HasOne("VideoManager.Models.User", "ModifiedByUser")
-                        .WithMany()
-                        .HasForeignKey("ModifiedByUserId");
-
                     b.HasOne("VideoManager.Models.User", "Owner")
-                        .WithMany()
+                        .WithMany("Rooms")
                         .HasForeignKey("OwnerId");
+                });
+
+            modelBuilder.Entity("VideoManager.Models.User", b =>
+                {
+                    b.HasOne("VideoManager.Models.Library", "Library")
+                        .WithMany()
+                        .HasForeignKey("LibraryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("VideoManager.Models.Video", b =>
                 {
-                    b.HasOne("VideoManager.Models.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId");
-
-                    b.HasOne("VideoManager.Models.User", "ModifiedByUser")
-                        .WithMany()
-                        .HasForeignKey("ModifiedByUserId");
+                    b.HasOne("VideoManager.Models.Library", null)
+                        .WithMany("Videos")
+                        .HasForeignKey("LibraryId");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
 using VideoManager.Models;
@@ -15,13 +14,13 @@ namespace VideoManager.Services
             _roomService = roomService;
         }
 
-        public async Task ReceiveSyncMessage(Guid roomId, Guid userId, VideoSyncMessage videoSyncMessage)
+        public async Task ReceiveSyncMessage(Guid userId, VideoSyncMessage videoSyncMessage)
         {
-            Room room = await _roomService.Get(roomId);
+            Room room = await _roomService.Get(videoSyncMessage.RoomId);
 
             if (!room.OwnerId.HasValue || room.OwnerId == userId)
             {
-                await Clients.GroupExcept(roomId.ToString(), Context.ConnectionId).SendAsync("VideoSyncMessage", videoSyncMessage);
+                await Clients.GroupExcept(videoSyncMessage.RoomId.ToString(), Context.ConnectionId).SendAsync("VideoSyncMessage", videoSyncMessage);
             }
         }
 

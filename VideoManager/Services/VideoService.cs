@@ -13,14 +13,12 @@ namespace VideoManager.Services
     public interface IVideoService
     {
         Task<List<Video>> GetAll(VideoStatus? videoStatus = null);
-        Task<List<Guid>> GetAllIds(VideoStatus? videoStatus = null);
-        Task<List<Video>> GetAllByRoomId(Guid roomId);
+        Task<IEnumerable<Video>> GetAllByRoomId(Guid roomId);
         Task<Video> Get(Guid videoId);
         Task<List<Video>> GetRandom(int count);
         Task<List<Video>> GetVideosToEncode(int count);
         Task<Video> Create(IFormFile formFile);
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
-        Task<IEnumerable<Video>> DeleteMany(IEnumerable<Guid> videoIds);
         Task<Video> Delete(Guid videoId);
         Task<IEnumerable<Video>> DeleteFailed();
         Task<IEnumerable<Video>> DeleteOrphaned();
@@ -35,24 +33,31 @@ namespace VideoManager.Services
         private readonly IFileService _fileService;
         private readonly IEncoder _encodingService;
         private static readonly DateTime _encodingCooldown = DateTime.UtcNow.AddMinutes(-30);
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private Guid UserId => (Guid)_httpContextAccessor.HttpContext?.Items["UserId"];
 
         public VideoService(ILogger<VideoService> logger,
             VideoManagerDbContext videoManagerDbContext,
             IFileService fileService,
-            IEncoder encodingService)
+            IEncoder encodingService,
+            IHttpContextAccessor httpContextAccessor)
         {
             _logger = logger;
             _videoManagerDbContext = videoManagerDbContext;
             _fileService = fileService;
             _encodingService = encodingService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<List<Video>> GetAllByRoomId(Guid roomId)
+        public async Task<IEnumerable<Video>> GetAllByRoomId(Guid roomId)
         {
-            return await _videoManagerDbContext.RoomVideos
-              .Where(x => x.RoomId == roomId)
-              .Join(_videoManagerDbContext.Videos, x => x.VideoId, x => x.VideoId, (videoId, Video) => Video)
-              .ToListAsync();
+            Room room = await _videoManagerDbContext.Rooms
+                .Include(x => x.Playlist)
+                .FirstOrDefaultAsync(x => x.RoomId == roomId);
+
+            if (room == null) return Enumerable.Empty<Video>();
+
+            return room.Playlist.PlaylistVideos.Select(x => x.Video);
         }
 
         public async Task<IEnumerable<Video>> AssignDurations()
@@ -137,7 +142,7 @@ namespace VideoManager.Services
         {
             List<Video> availableVideoIds = await _videoManagerDbContext.Videos
                 .AsNoTracking()
-                .Where(x => x.Status == VideoStatus.Ready)
+                .Where(x => x.CreatedByUserId == UserId && x.Status == VideoStatus.Ready)
                 .ToListAsync();
 
             List<Video> videos = new List<Video>(count);
@@ -156,12 +161,14 @@ namespace VideoManager.Services
 
         public async Task<Video> Get(Guid videoId)
         {
-            return await _videoManagerDbContext.Videos.FindAsync(videoId);
+            return await _videoManagerDbContext.Videos
+                .FirstOrDefaultAsync(x => x.VideoId == videoId && x.CreatedByUserId == UserId);
         }
 
         public async Task<Video> Delete(Guid videoId)
         {
-            Video video = await _videoManagerDbContext.Videos.FindAsync(videoId);
+            Video video = await _videoManagerDbContext.Videos
+                .FirstOrDefaultAsync(x => x.VideoId == videoId && x.CreatedByUserId == UserId);
 
             if (video != null)
             {
@@ -172,14 +179,15 @@ namespace VideoManager.Services
             return video;
         }
 
-        public async Task<IEnumerable<Video>> DeleteMany(IEnumerable<Guid> videoIds)
+        private async Task<IEnumerable<Video>> DeleteMany(IEnumerable<Guid> videoIds)
         {
             List<Video> videosToDelete = new List<Video>();
             List<Guid> deletedVideoIds = new List<Guid>();
 
             foreach (Guid videoId in videoIds)
             {
-                Video video = await _videoManagerDbContext.Videos.FindAsync(videoId);
+                Video video = await _videoManagerDbContext.Videos
+                    .FirstOrDefaultAsync(x => x.VideoId == videoId);
 
                 if (video != null)
                 {
@@ -246,16 +254,7 @@ namespace VideoManager.Services
         {
             return await _videoManagerDbContext.Videos
                 .AsNoTracking()
-                .Where(x => !videoStatus.HasValue || x.Status == videoStatus)
-                .ToListAsync();
-        }
-
-        public async Task<List<Guid>> GetAllIds(VideoStatus? videoStatus)
-        {
-            return await _videoManagerDbContext.Videos
-                .AsNoTracking()
-                .Where(x => !videoStatus.HasValue || x.Status == videoStatus)
-                .Select(x => x.VideoId)
+                .Where(x => x.CreatedByUserId == UserId && (!videoStatus.HasValue || x.Status == videoStatus))
                 .ToListAsync();
         }
     }

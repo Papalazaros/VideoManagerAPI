@@ -4,25 +4,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace VideoManager.Models
 {
-    public class Room
+    public class Room : BaseEntity
     {
         [Key]
         public Guid RoomId { get; set; }
-
-        [Required]
         public string Name { get; set; }
-
         public Guid? OwnerId { get; set; }
         public User Owner { get; set; }
-
-        [Required]
         public bool IsPrivate { get; set; } = true;
-
-        [Required]
-        public Guid CreatedById { get; set; }
-        [Required]
-        public User CreatedBy { get; set; }
-
-        public ICollection<RoomVideo> RoomVideos { get; set; }
+        public Guid PlaylistId { get; set; }
+        public Playlist Playlist { get; set; }
     }
 }

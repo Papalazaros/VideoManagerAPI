@@ -1,9 +1,12 @@
-﻿namespace VideoManager.Models
+﻿using System;
+
+namespace VideoManager.Models
 {
     public class VideoSyncMessage
     {
         public VideoSyncOperation VideoSyncOperation { get; set; }
         public object Payload { get; set; }
+        public Guid RoomId { get; set; }
     }
 
     public enum VideoSyncOperation

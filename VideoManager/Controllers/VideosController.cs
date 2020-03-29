@@ -1,4 +1,5 @@
 ﻿using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -20,17 +21,14 @@ namespace VideoManager.Controllers
     {
         private readonly ILogger<VideosController> _logger;
         private readonly IVideoService _videoService;
-        private readonly IVideoSyncService _videoSyncService;
         private readonly IMemoryCache _memoryCache;
 
         public VideosController(ILogger<VideosController> logger,
             IVideoService videoService,
-            IVideoSyncService videoSyncService,
             IMemoryCache memoryCache)
         {
             _logger = logger;
             _videoService = videoService;
-            _videoSyncService = videoSyncService;
             _memoryCache = memoryCache;
         }
 
@@ -42,15 +40,9 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        public async Task<List<Video>> GetAllVideos(VideoStatus? videoStatus)
+        public async Task<IEnumerable<Video>> GetAllVideos(VideoStatus? videoStatus)
         {
             return await _videoService.GetAll(videoStatus);
-        }
-
-        [HttpGet]
-        public async Task<List<Video>> GetAllVideos(Guid roomId)
-        {
-            return await _videoService.GetAllByRoomId(roomId);
         }
 
         [HttpDelete]
@@ -64,17 +56,13 @@ namespace VideoManager.Controllers
         [Route("{videoId:Guid}/Stream")]
         public async Task<IActionResult> GetStream(Guid videoId)
         {
-            var reqestedRange = HttpContext.Request.GetTypedHeaders().Range?.Ranges;
+            var requestedRange = HttpContext.Request.GetTypedHeaders().Range?.Ranges;
 
-            if (reqestedRange == null) return BadRequest();
+            if (requestedRange == null) return BadRequest();
 
-            if (!_memoryCache.TryGetValue("VIDEO:" + videoId, out string videoPath))
-            {
-                Video video = await _videoService.Get(videoId);
-                videoPath = Path.Join(Directory.GetCurrentDirectory(), video?.GetEncodedFilePath());
-                if (string.IsNullOrEmpty(videoPath)) return NoContent();
-                else _memoryCache.Set("VIDEO:" + videoId, videoPath);
-            }
+            Video video = await _videoService.Get(videoId);
+            if (video == null) return NoContent();
+            string videoPath = Path.Join(Directory.GetCurrentDirectory(), video?.GetEncodedFilePath());
 
             return PhysicalFile(videoPath, "video/mp4", true);
         }
@@ -83,14 +71,10 @@ namespace VideoManager.Controllers
         [Route("{videoId:Guid}/Thumbnail")]
         public async Task<IActionResult> GetThumbnail(Guid videoId)
         {
-            if (!_memoryCache.TryGetValue("THUMBNAIL:" + videoId, out string thumbnailPath))
-            {
-                Video video = await _videoService.Get(videoId);
-                thumbnailPath = Path.Join(Directory.GetCurrentDirectory(), video?.ThumbnailFilePath);
-                if (string.IsNullOrEmpty(thumbnailPath)) return NoContent();
-                else _memoryCache.Set("THUMBNAIL:" + videoId, thumbnailPath);
-            }
+            Video video = await _videoService.Get(videoId);
 
+            if (video == null) return NoContent();
+            string thumbnailPath = Path.Join(Directory.GetCurrentDirectory(), video?.ThumbnailFilePath);
             return PhysicalFile(thumbnailPath, "image/jpeg");
         }
 
