@@ -20,6 +20,7 @@ namespace VideoManager.Services
         Task<Video> Create(IFormFile formFile);
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
         Task<Video> Delete(Guid videoId);
+        Task<Video> FindByOriginalVideoName(string originalVideoName);
         Task<IEnumerable<Video>> DeleteFailed();
         Task<IEnumerable<Video>> DeleteOrphaned();
         Task<IEnumerable<Video>> AssignThumbnails();
@@ -237,6 +238,12 @@ namespace VideoManager.Services
             await _videoManagerDbContext.SaveChangesAsync();
 
             return videos;
+        }
+
+        public async Task<Video> FindByOriginalVideoName(string originalVideoName)
+        {
+            return await _videoManagerDbContext.Videos
+                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName);
         }
 
         public async Task<Video> Create(IFormFile formFile)

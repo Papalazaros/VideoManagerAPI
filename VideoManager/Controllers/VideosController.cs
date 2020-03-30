@@ -1,4 +1,5 @@
-﻿using FluentValidation.Results;
+﻿using AutoMapper;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,14 +23,17 @@ namespace VideoManager.Controllers
         private readonly ILogger<VideosController> _logger;
         private readonly IVideoService _videoService;
         private readonly IMemoryCache _memoryCache;
+        private readonly IMapper _mapper;
 
         public VideosController(ILogger<VideosController> logger,
             IVideoService videoService,
-            IMemoryCache memoryCache)
+            IMemoryCache memoryCache,
+            IMapper mapper)
         {
             _logger = logger;
             _videoService = videoService;
             _memoryCache = memoryCache;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -40,9 +44,9 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Video>> GetAllVideos(VideoStatus? videoStatus)
+        public async Task<IEnumerable<VideoDto>> GetAllVideos(VideoStatus? videoStatus)
         {
-            return await _videoService.GetAll(videoStatus);
+            return _mapper.Map<List<Video>, List<VideoDto>>(await _videoService.GetAll(videoStatus));
         }
 
         [HttpDelete]
@@ -91,14 +95,15 @@ namespace VideoManager.Controllers
         {
             if (files == null) return BadRequest();
 
-            Dictionary<string, IList<ValidationFailure>> failedFiles = new Dictionary<string, IList<ValidationFailure>>(9);
+            Dictionary<string, IEnumerable<string>> failedFiles = new Dictionary<string, IEnumerable<string>>();
             VideoValidator videoValidator = new VideoValidator();
 
             foreach (IFormFile file in files)
             {
                 ValidationResult validationResult = videoValidator.Validate(file);
 
-                if (!validationResult.IsValid) failedFiles[file.FileName] = validationResult.Errors;
+                if (!validationResult.IsValid) failedFiles[file.FileName] = validationResult.Errors.Select(x => x.ErrorMessage);
+                else if (await _videoService.FindByOriginalVideoName(file.FileName) != null) failedFiles[file.FileName] = new List<string> { "Duplicate file." };
             }
 
             IEnumerable<IFormFile> validVideos = files.Where(x => !failedFiles.ContainsKey(x.FileName));
@@ -115,7 +120,8 @@ namespace VideoManager.Controllers
             VideoValidator videoValidator = new VideoValidator();
             ValidationResult validationResult = videoValidator.Validate(file);
 
-            if (!validationResult.IsValid) return new BadRequestObjectResult(validationResult.Errors);
+            if (!validationResult.IsValid) return new BadRequestObjectResult(validationResult.Errors.Select(x => x.ErrorMessage));
+            else if (await _videoService.FindByOriginalVideoName(file.FileName) != null) return BadRequest(new List<string> { "Duplicate file." });
 
             return Ok(await _videoService.Create(file));
         }

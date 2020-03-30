@@ -8,6 +8,8 @@ namespace VideoManager.Models
     {
         [Key]
         public Guid RoomId { get; set; }
+
+        [Required]
         public string Name { get; set; }
         public Guid? OwnerId { get; set; }
         public User Owner { get; set; }

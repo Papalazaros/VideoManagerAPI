@@ -29,7 +29,7 @@ namespace VideoManager.Services
 
         public async Task<Room> Get(Guid roomId)
         {
-            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.CreatedByUserId == UserId && x.RoomId == roomId);
+            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId);
         }
 
         public async Task<IEnumerable<Room>> GetAll()

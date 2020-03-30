@@ -1,3 +1,4 @@
+using AutoMapper;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -50,6 +51,8 @@ namespace VideoManager
             services.AddHostedService<EncodingService>();
 
             services.AddHostedService<VideoBackgroundService>();
+
+            services.AddAutoMapper(typeof(Startup));
 
             services.AddSignalR().AddJsonProtocol(opts =>
             {

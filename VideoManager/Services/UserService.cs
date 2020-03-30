@@ -12,6 +12,7 @@ namespace VideoManager.Services
     public interface IUserService
     {
         Task<User> CreateOrGetUser(string auth0Id);
+        Task<Guid?> GetUserId(string auth0Id);
     }
 
     public class UserService : IUserService
@@ -51,6 +52,16 @@ namespace VideoManager.Services
             _memoryCache.Set(auth0Id, user);
 
             return user;
+        }
+
+        public async Task<Guid?> GetUserId(string auth0Id)
+        {
+            if (string.IsNullOrEmpty(auth0Id)) return null;
+            if (_memoryCache.TryGetValue(auth0Id, out User user)) return user.UserId;
+
+            user = await _videoManagerDbContext.Users.FirstOrDefaultAsync(x => x.Auth0Id == auth0Id);
+
+            return user?.UserId;
         }
     }
 }
