@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using VideoManager.Models;
+using VideoManager.Models.Dto;
 using VideoManager.Services;
 using VideoManager.Validators;
 
@@ -22,31 +23,37 @@ namespace VideoManager.Controllers
     {
         private readonly ILogger<VideosController> _logger;
         private readonly IVideoService _videoService;
+        private readonly IAuth0Service _auth0Service;
+        private readonly IUserService _userService;
         private readonly IMemoryCache _memoryCache;
         private readonly IMapper _mapper;
 
         public VideosController(ILogger<VideosController> logger,
             IVideoService videoService,
+            IAuth0Service auth0Service,
+            IUserService userService,
             IMemoryCache memoryCache,
             IMapper mapper)
         {
             _logger = logger;
             _videoService = videoService;
+            _auth0Service = auth0Service;
+            _userService = userService;
             _memoryCache = memoryCache;
             _mapper = mapper;
         }
 
         [HttpGet]
         [Route("Random")]
-        public async Task<List<Video>> GetRandomVideoId(int count)
+        public async Task<IEnumerable<GetVideoDto>> GetRandomVideoId(int count)
         {
-            return await _videoService.GetRandom(count);
+            return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetRandom(count));
         }
 
         [HttpGet]
-        public async Task<IEnumerable<VideoDto>> GetAllVideos(VideoStatus? videoStatus)
+        public async Task<IEnumerable<GetVideoDto>> GetAllVideos(VideoStatus? videoStatus)
         {
-            return _mapper.Map<List<Video>, List<VideoDto>>(await _videoService.GetAll(videoStatus));
+            return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetAll(videoStatus));
         }
 
         [HttpDelete]
@@ -58,14 +65,12 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{videoId:Guid}/Stream")]
-        public async Task<IActionResult> GetStream(Guid videoId)
+        public async Task<IActionResult> GetStream(string accessToken, Guid videoId)
         {
-            var requestedRange = HttpContext.Request.GetTypedHeaders().Range?.Ranges;
-
-            if (requestedRange == null) return BadRequest();
-
             Video video = await _videoService.Get(videoId);
+
             if (video == null) return NoContent();
+
             string videoPath = Path.Join(Directory.GetCurrentDirectory(), video?.GetEncodedFilePath());
 
             return PhysicalFile(videoPath, "video/mp4", true);
@@ -73,7 +78,7 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{videoId:Guid}/Thumbnail")]
-        public async Task<IActionResult> GetThumbnail(Guid videoId)
+        public async Task<IActionResult> GetThumbnail(string accessToken, Guid videoId)
         {
             Video video = await _videoService.Get(videoId);
 
@@ -123,7 +128,7 @@ namespace VideoManager.Controllers
             if (!validationResult.IsValid) return new BadRequestObjectResult(validationResult.Errors.Select(x => x.ErrorMessage));
             else if (await _videoService.FindByOriginalVideoName(file.FileName) != null) return BadRequest(new List<string> { "Duplicate file." });
 
-            return Ok(await _videoService.Create(file));
+            return Ok(_mapper.Map<Video, PostVideoDto>(await _videoService.Create(file)));
         }
     }
 }

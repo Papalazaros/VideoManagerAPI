@@ -6,7 +6,6 @@ namespace VideoManager.Models
     {
         public VideoSyncOperation VideoSyncOperation { get; set; }
         public object Payload { get; set; }
-        public Guid RoomId { get; set; }
     }
 
     public enum VideoSyncOperation

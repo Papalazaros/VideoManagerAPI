@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -34,9 +35,12 @@ namespace VideoManager.Services
             httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             HttpResponseMessage httpResponseMessage = await _httpClient.SendAsync(httpRequestMessage);
-            string json = await httpResponseMessage.Content.ReadAsStringAsync();
 
-            Auth0User auth0User = JsonSerializer.Deserialize<Auth0User>(json);
+            if (!httpResponseMessage.IsSuccessStatusCode) return null;
+
+            Stream stream = await httpResponseMessage.Content.ReadAsStreamAsync();
+
+            Auth0User auth0User = await JsonSerializer.DeserializeAsync<Auth0User>(stream);
             userId = auth0User?.sub;
 
             if (!string.IsNullOrEmpty(userId)) _memoryCache.Set(token, userId, TimeSpan.FromSeconds(86400));

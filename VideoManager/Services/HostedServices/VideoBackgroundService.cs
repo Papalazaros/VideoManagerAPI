@@ -9,7 +9,8 @@ namespace VideoManager.Services
 {
     public class VideoBackgroundService : BackgroundTaskService
     {
-        public VideoBackgroundService(ILogger<VideoBackgroundService> logger, IServiceScopeFactory scopeFactory) : base(logger, scopeFactory) { }
+        public VideoBackgroundService(ILogger<VideoBackgroundService> logger, IServiceScopeFactory scopeFactory)
+            : base(logger, scopeFactory) { }
 
         public override async Task<bool> DoWork()
         {

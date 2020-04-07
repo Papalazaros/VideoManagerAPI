@@ -10,7 +10,7 @@ namespace VideoManager.Models
     {
         [Key]
         public Guid PlaylistId { get; set; }
-        public string Name => $"{RoomId}_{PlaylistId}";
+        public string Name { get; set; }
         public Guid RoomId { get; set; }
         public Room Room { get; set; }
 

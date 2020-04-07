@@ -49,7 +49,7 @@ namespace VideoManager.Middleware
                 && !string.IsNullOrWhiteSpace(parameter))
             {
                 string auth0UserId = await auth0Service.GetAuth0UserId(parameter);
-                User user = await userService.CreateOrGetUser(auth0UserId);
+                User user = await userService.CreateOrGetByAuthId(auth0UserId);
 
                 if (user != null)
                 {

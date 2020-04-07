@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
@@ -48,16 +49,15 @@ namespace VideoManager
 
             services.AddScoped<IVideoService, VideoService>();
 
+            services.AddScoped<IRoomService, RoomService>();
+
             services.AddHostedService<EncodingService>();
 
             services.AddHostedService<VideoBackgroundService>();
 
             services.AddAutoMapper(typeof(Startup));
 
-            services.AddSignalR().AddJsonProtocol(opts =>
-            {
-                opts.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            });
+            services.AddSignalR().AddJsonProtocol(opts => opts.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
             services.AddCors(o => o.AddPolicy("CorsPolicy", builder => {
                 builder
@@ -75,19 +75,10 @@ namespace VideoManager
             });
 
             services.AddControllers()
-                .AddFluentValidation(opt =>
-                {
-                    opt.RegisterValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-                })
-                .AddJsonOptions(opts =>
-                {
-                    opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                });
+                .AddFluentValidation(opt => opt.RegisterValidatorsFromAssembly(Assembly.GetExecutingAssembly()))
+                .AddJsonOptions(opts => opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-            services.AddSwaggerGen(x =>
-            {
-                x.SwaggerDoc("v1", new OpenApiInfo { Title = "VideoManager" });
-            });
+            services.AddSwaggerGen(x => x.SwaggerDoc("v1", new OpenApiInfo { Title = "VideoManager" }));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -104,9 +95,12 @@ namespace VideoManager
 
             app.UseCors("CorsPolicy");
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
-            app.UseMiddleware(typeof(RequestMiddleware));
+            app.UseWhen(context => !context.Request.Path.StartsWithSegments("/videoHub")
+                && !context.Request.Path.ToString().EndsWith("Stream", StringComparison.OrdinalIgnoreCase)
+                && !context.Request.Path.ToString().EndsWith("Thumbnail", StringComparison.OrdinalIgnoreCase),
+                app => app.UseMiddleware(typeof(RequestMiddleware)));
 
             app.UseRouting();
 

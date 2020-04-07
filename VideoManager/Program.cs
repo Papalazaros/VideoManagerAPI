@@ -18,10 +18,7 @@ namespace VideoManager
             .ConfigureWebHostDefaults(webBuilder =>
             {
                 webBuilder.UseStartup<Startup>()
-                    .UseKestrel(options =>
-                    {
-                        options.Limits.MaxRequestBodySize = 250000000;
-                    });
+                    .UseKestrel(options => options.Limits.MaxRequestBodySize = 250000000);
             });
     }
 }

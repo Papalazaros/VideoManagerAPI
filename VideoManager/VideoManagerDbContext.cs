@@ -55,7 +55,7 @@ namespace VideoManager
                 if (entity.State == EntityState.Added)
                 {
                     ((BaseEntity)entity.Entity).CreatedDate = utcNow;
-                    ((BaseEntity)entity.Entity).CreatedByUserId = userId;
+                    ((BaseEntity)entity.Entity).CreatedByUserId ??= userId;
                 }
 
                 ((BaseEntity)entity.Entity).ModifiedDate = utcNow;

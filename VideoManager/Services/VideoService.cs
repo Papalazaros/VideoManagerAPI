@@ -35,7 +35,7 @@ namespace VideoManager.Services
         private readonly IEncoder _encodingService;
         private static readonly DateTime _encodingCooldown = DateTime.UtcNow.AddMinutes(-30);
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private Guid UserId => (Guid)_httpContextAccessor.HttpContext?.Items["UserId"];
+        private Guid? UserId => (Guid?)_httpContextAccessor.HttpContext?.Items["UserId"];
 
         public VideoService(ILogger<VideoService> logger,
             VideoManagerDbContext videoManagerDbContext,
@@ -143,7 +143,7 @@ namespace VideoManager.Services
         {
             List<Video> availableVideoIds = await _videoManagerDbContext.Videos
                 .AsNoTracking()
-                .Where(x => x.CreatedByUserId == UserId && x.Status == VideoStatus.Ready)
+                .Where(x => x.Status == VideoStatus.Ready)
                 .ToListAsync();
 
             List<Video> videos = new List<Video>(count);
@@ -163,7 +163,7 @@ namespace VideoManager.Services
         public async Task<Video> Get(Guid videoId)
         {
             return await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.VideoId == videoId && x.CreatedByUserId == UserId);
+                .FirstOrDefaultAsync(x => x.VideoId == videoId);// && x.CreatedByUserId == UserId);
         }
 
         public async Task<Video> Delete(Guid videoId)
@@ -217,7 +217,8 @@ namespace VideoManager.Services
                 OriginalFileName = formFile.FileName,
                 OriginalLength = formFile.Length,
                 OriginalType = fileExtension,
-                Status = VideoStatus.Uploaded
+                Status = VideoStatus.Uploaded,
+                IpAddress = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString()
             };
         }
 
@@ -250,8 +251,17 @@ namespace VideoManager.Services
         {
             Video video = CreateVideoFromIFormFile(formFile);
 
+            Playlist playlist = await _videoManagerDbContext.Playlists.FirstOrDefaultAsync(x => x.Name == "DEFAULT");
+
+            PlaylistVideo playlistVideo = new PlaylistVideo
+            {
+                VideoId = video.VideoId,
+                PlaylistId = playlist.PlaylistId
+            };
+
             await _fileService.Create(formFile.OpenReadStream(), video.GetOriginalFilePath());
             await _videoManagerDbContext.Videos.AddAsync(video);
+            await _videoManagerDbContext.PlaylistVideos.AddAsync(playlistVideo);
             await _videoManagerDbContext.SaveChangesAsync();
 
             return video;

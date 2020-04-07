@@ -18,7 +18,8 @@ namespace VideoManager.Services
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly VideoManagerDbContext _videoManagerDbContext;
-        private Guid UserId => (Guid)_httpContextAccessor.HttpContext?.Items["UserId"];
+
+        private Guid? UserId => (Guid?)_httpContextAccessor.HttpContext?.Items["UserId"];
 
         public RoomService(VideoManagerDbContext videoManagerDbContext,
             IHttpContextAccessor httpContextAccessor)

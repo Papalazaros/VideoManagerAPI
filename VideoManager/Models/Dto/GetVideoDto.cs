@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace VideoManager.Models
+namespace VideoManager.Models.Dto
 {
-    public class VideoDto
+    public class GetVideoDto
     {
         public Guid VideoId { get; set; }
         public string OriginalFileName { get; set; }
         public long? Length { get; set; }
         public int? DurationInSeconds { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
     }
 }
