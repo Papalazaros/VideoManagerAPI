@@ -12,7 +12,7 @@ namespace VideoManager.Services
     public interface IUserService
     {
         Task<User> CreateOrGetByAuthId(string auth0Id);
-        Task<Guid?> GetUserIdByAuthId(string auth0Id);
+        Task<int?> GetUserIdByAuthId(string auth0Id);
     }
 
     public class UserService : IUserService
@@ -39,42 +39,40 @@ namespace VideoManager.Services
 
             if (user == null)
             {
-                Guid userId = Guid.NewGuid();
-                Guid roomId = Guid.NewGuid();
-                Guid playlistId = Guid.NewGuid();
-
-                user = new User
-                {
-                    UserId = userId,
-                    Auth0Id = auth0Id
-                };
-
-                Playlist playlist = new Playlist
-                {
-                    Name = "DEFAULT",
-                    PlaylistId = playlistId,
-                    RoomId = roomId,
-                    CreatedByUserId = userId,
-                    ModifiedByUserId = userId
-                };
-
-                Room room = new Room
-                {
-                    Name = "DEFAULT",
-                    RoomId = roomId,
-                    PlaylistId = playlistId,
-                    CreatedByUserId = userId,
-                    ModifiedByUserId = userId
-                };
-
                 using var transaction = _videoManagerDbContext.Database.BeginTransaction();
+
                 try
                 {
-                    await _videoManagerDbContext.Users.AddAsync(user);
-                    await _videoManagerDbContext.Playlists.AddAsync(playlist);
-                    await _videoManagerDbContext.Rooms.AddAsync(room);
+                    user = new User
+                    {
+                        Auth0Id = auth0Id,
+                        EmailAddress = user.EmailAddress
+                    };
 
+                    await _videoManagerDbContext.Users.AddAsync(user);
                     await _videoManagerDbContext.SaveChangesAsync();
+
+                    Playlist playlist = new Playlist
+                    {
+                        Name = "DEFAULT",
+                        CreatedByUser = user,
+                        ModifiedByUser = user
+                    };
+
+                    await _videoManagerDbContext.Playlists.AddAsync(playlist);
+                    await _videoManagerDbContext.SaveChangesAsync();
+
+                    Room room = new Room
+                    {
+                        Name = "DEFAULT",
+                        Playlist = playlist,
+                        CreatedByUser = user,
+                        ModifiedByUser = user
+                    };
+
+                    await _videoManagerDbContext.Rooms.AddAsync(room);
+                    await _videoManagerDbContext.SaveChangesAsync();
+
                     transaction.Commit();
                 }
                 catch (Exception)
@@ -88,7 +86,7 @@ namespace VideoManager.Services
             return user;
         }
 
-        public async Task<Guid?> GetUserIdByAuthId(string auth0Id)
+        public async Task<int?> GetUserIdByAuthId(string auth0Id)
         {
             if (string.IsNullOrEmpty(auth0Id)) return null;
             if (_memoryCache.TryGetValue(auth0Id, out User user)) return user.UserId;

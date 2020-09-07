@@ -10,11 +10,11 @@ using VideoManager.Services;
 
 namespace VideoManager.Middleware
 {
-    public class RequestMiddleware
+    public class AuthenticationMiddleware
     {
         private readonly RequestDelegate _next;
 
-        public RequestMiddleware(RequestDelegate next)
+        public AuthenticationMiddleware(RequestDelegate next)
         {
             _next = next;
         }

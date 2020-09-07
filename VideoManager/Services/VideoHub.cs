@@ -25,11 +25,11 @@ namespace VideoManager.Services
             _videoManagerDbContext = videoManagerDbContext;
         }
 
-        public async Task ReceiveSyncMessage(Guid roomId, string auth0Token, VideoSyncMessage videoSyncMessage)
+        public async Task ReceiveSyncMessage(int roomId, string auth0Token, VideoSyncMessage videoSyncMessage)
         {
             Room room = await _roomService.Get(roomId);
             string auth0UserId = await _auth0Service.GetAuth0UserId(auth0Token);
-            Guid? userId = await _userService.GetUserIdByAuthId(auth0UserId);
+            int? userId = await _userService.GetUserIdByAuthId(auth0UserId);
 
             if ((!room.OwnerId.HasValue || room.OwnerId == userId) && userId.HasValue)
             {
@@ -44,7 +44,6 @@ namespace VideoManager.Services
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-
             return base.OnDisconnectedAsync(exception);
         }
 

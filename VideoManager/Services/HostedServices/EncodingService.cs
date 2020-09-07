@@ -18,7 +18,7 @@ namespace VideoManager.Services
                 "EncodingService is working.");
 
             using IServiceScope scope = _scopeFactory.CreateScope();
-            IVideoService videoService = scope.ServiceProvider.GetRequiredService<IVideoService>();
+            IVideoManagerService videoService = scope.ServiceProvider.GetRequiredService<IVideoManagerService>();
             List<Video> videos = await videoService.GetVideosToEncode(_maxConcurrentTasks);
 
             if (videos.Count == 0) return false;

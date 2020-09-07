@@ -9,10 +9,9 @@ namespace VideoManager.Models
     public class Playlist : BaseEntity
     {
         [Key]
-        public Guid PlaylistId { get; set; }
+        public int PlaylistId { get; set; }
+
         public string Name { get; set; }
-        public Guid RoomId { get; set; }
-        public Room Room { get; set; }
 
         public ICollection<PlaylistVideo> PlaylistVideos { get; set; }
     }

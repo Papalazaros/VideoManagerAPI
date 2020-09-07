@@ -46,7 +46,7 @@ namespace VideoManager
             var entities = ChangeTracker.Entries().Where(x => x.Entity is BaseEntity
                 && (x.State == EntityState.Added || x.State == EntityState.Modified));
 
-            Guid? userId = (Guid?)_httpContextAccessor.HttpContext?.Items["UserId"];
+            int? userId = (int?)_httpContextAccessor.HttpContext?.Items["UserId"];
 
             DateTime utcNow = DateTime.UtcNow;
 
@@ -77,11 +77,6 @@ namespace VideoManager
                 .HasOne(pt => pt.Playlist)
                 .WithMany(t => t.PlaylistVideos)
                 .HasForeignKey(pt => pt.PlaylistId);
-
-            modelBuilder.Entity<Room>()
-                        .HasOne(a => a.Playlist)
-                        .WithOne(a => a.Room)
-                        .HasForeignKey<Playlist>(c => c.RoomId);
         }
     }
 }

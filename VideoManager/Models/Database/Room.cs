@@ -7,14 +7,19 @@ namespace VideoManager.Models
     public class Room : BaseEntity
     {
         [Key]
-        public Guid RoomId { get; set; }
+        public int RoomId { get; set; }
 
         [Required]
         public string Name { get; set; }
-        public Guid? OwnerId { get; set; }
+
+        public int? OwnerId { get; set; }
+
         public User Owner { get; set; }
+
         public bool IsPrivate { get; set; } = true;
-        public Guid PlaylistId { get; set; }
+
+        public int PlaylistId { get; set; }
+
         public Playlist Playlist { get; set; }
     }
 }

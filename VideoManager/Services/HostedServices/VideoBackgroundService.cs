@@ -18,7 +18,7 @@ namespace VideoManager.Services
                 "VideoBackgroundService is working.");
 
             using IServiceScope scope = _scopeFactory.CreateScope();
-            IVideoService videoService = scope.ServiceProvider.GetRequiredService<IVideoService>();
+            IVideoManagerService videoService = scope.ServiceProvider.GetRequiredService<IVideoManagerService>();
 
             IEnumerable<Video> orphanedFiles = await videoService.DeleteOrphaned();
             IEnumerable<Video> failedFiles = await videoService.DeleteFailed();

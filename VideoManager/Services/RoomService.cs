@@ -10,7 +10,7 @@ namespace VideoManager.Services
 {
     public interface IRoomService
     {
-        Task<Room> Get(Guid id);
+        Task<Room> Get(int roomId);
         Task<IEnumerable<Room>> GetAll();
     }
 
@@ -19,7 +19,7 @@ namespace VideoManager.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly VideoManagerDbContext _videoManagerDbContext;
 
-        private Guid? UserId => (Guid?)_httpContextAccessor.HttpContext?.Items["UserId"];
+        private int? UserId => (int?)_httpContextAccessor.HttpContext?.Items["UserId"];
 
         public RoomService(VideoManagerDbContext videoManagerDbContext,
             IHttpContextAccessor httpContextAccessor)
@@ -28,7 +28,7 @@ namespace VideoManager.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<Room> Get(Guid roomId)
+        public async Task<Room> Get(int roomId)
         {
             return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId);
         }

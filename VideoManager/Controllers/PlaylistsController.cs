@@ -30,7 +30,7 @@ namespace VideoManager.Controllers
 
         // GET: api/Playlists/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Playlist>> GetPlaylist(Guid id)
+        public async Task<ActionResult<Playlist>> GetPlaylist(int id)
         {
             var playlist = await _context.Playlists.FindAsync(id);
 
@@ -41,7 +41,7 @@ namespace VideoManager.Controllers
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for
         // more details see https://aka.ms/RazorPagesCRUD.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPlaylist(Guid id, Playlist playlist)
+        public async Task<IActionResult> PutPlaylist(int id, Playlist playlist)
         {
             if (id != playlist.PlaylistId)
             {
@@ -72,7 +72,7 @@ namespace VideoManager.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Playlist>> DeletePlaylist(Guid id)
+        public async Task<ActionResult<Playlist>> DeletePlaylist(int id)
         {
             var playlist = await _context.Playlists.FindAsync(id);
             if (playlist == null)
@@ -86,7 +86,7 @@ namespace VideoManager.Controllers
             return playlist;
         }
 
-        private bool PlaylistExists(Guid id)
+        private bool PlaylistExists(int id)
         {
             return _context.Playlists.Any(e => e.PlaylistId == id);
         }

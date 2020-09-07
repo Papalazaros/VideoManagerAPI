@@ -14,7 +14,7 @@ namespace VideoManager.Models
         public override string ToString() => $"Guid: {VideoId}\nOriginalFileName: {OriginalFileName}";
 
         [Key]
-        public Guid VideoId { get; set; }
+        public int VideoId { get; set; }
 
         [Required]
         public string OriginalFileName { get; set; }

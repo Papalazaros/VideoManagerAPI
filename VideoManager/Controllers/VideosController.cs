@@ -22,14 +22,14 @@ namespace VideoManager.Controllers
     public class VideosController : ControllerBase
     {
         private readonly ILogger<VideosController> _logger;
-        private readonly IVideoService _videoService;
+        private readonly IUserVideoService _videoService;
         private readonly IAuth0Service _auth0Service;
         private readonly IUserService _userService;
         private readonly IMemoryCache _memoryCache;
         private readonly IMapper _mapper;
 
         public VideosController(ILogger<VideosController> logger,
-            IVideoService videoService,
+            IUserVideoService videoService,
             IAuth0Service auth0Service,
             IUserService userService,
             IMemoryCache memoryCache,
@@ -43,12 +43,12 @@ namespace VideoManager.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet]
-        [Route("Random")]
-        public async Task<IEnumerable<GetVideoDto>> GetRandomVideoId(int count)
-        {
-            return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetRandom(count));
-        }
+        //[HttpGet]
+        //[Route("Random")]
+        //public async Task<IEnumerable<GetVideoDto>> GetRandomVideoId(int count)
+        //{
+        //    return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetRandom(count));
+        //}
 
         [HttpGet]
         public async Task<IEnumerable<GetVideoDto>> GetAllVideos(VideoStatus? videoStatus)
@@ -58,14 +58,14 @@ namespace VideoManager.Controllers
 
         [HttpDelete]
         [Route("{videoId:Guid}")]
-        public async Task<Video> Delete(Guid videoId)
+        public async Task<Video> Delete(int videoId)
         {
             return await _videoService.Delete(videoId);
         }
 
         [HttpGet]
         [Route("{videoId:Guid}/Stream")]
-        public async Task<IActionResult> GetStream(string accessToken, Guid videoId)
+        public async Task<IActionResult> GetStream(int videoId)
         {
             Video video = await _videoService.Get(videoId);
 
@@ -78,18 +78,20 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{videoId:Guid}/Thumbnail")]
-        public async Task<IActionResult> GetThumbnail(string accessToken, Guid videoId)
+        public async Task<IActionResult> GetThumbnail(int videoId)
         {
             Video video = await _videoService.Get(videoId);
 
             if (video == null) return NoContent();
+
             string thumbnailPath = Path.Join(Directory.GetCurrentDirectory(), video?.ThumbnailFilePath);
+
             return PhysicalFile(thumbnailPath, "image/jpeg");
         }
 
         [HttpGet]
         [Route("{videoId:Guid}")]
-        public async Task<Video> GetVideoDetails(Guid videoId)
+        public async Task<Video> GetVideoDetails(int videoId)
         {
             return await _videoService.Get(videoId);
         }
