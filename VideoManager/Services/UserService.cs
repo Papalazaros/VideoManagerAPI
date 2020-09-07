@@ -37,45 +37,13 @@ namespace VideoManager.Services
 
             if (user == null)
             {
-                using var transaction = _videoManagerDbContext.Database.BeginTransaction();
-
-                try
+                user = new User
                 {
-                    user = new User
-                    {
-                        Auth0Id = auth0Id
-                    };
+                    Auth0Id = auth0Id
+                };
 
-                    await _videoManagerDbContext.Users.AddAsync(user);
-                    await _videoManagerDbContext.SaveChangesAsync();
-
-                    Playlist playlist = new Playlist
-                    {
-                        Name = "DEFAULT",
-                        CreatedByUser = user,
-                        ModifiedByUser = user
-                    };
-
-                    await _videoManagerDbContext.Playlists.AddAsync(playlist);
-                    await _videoManagerDbContext.SaveChangesAsync();
-
-                    Room room = new Room
-                    {
-                        Name = "DEFAULT",
-                        Playlist = playlist,
-                        CreatedByUser = user,
-                        ModifiedByUser = user
-                    };
-
-                    await _videoManagerDbContext.Rooms.AddAsync(room);
-                    await _videoManagerDbContext.SaveChangesAsync();
-
-                    transaction.Commit();
-                }
-                catch (Exception)
-                {
-                    // TODO: Handle failure
-                }
+                await _videoManagerDbContext.Users.AddAsync(user);
+                await _videoManagerDbContext.SaveChangesAsync();
             }
 
             _memoryCache.Set(auth0Id, user);

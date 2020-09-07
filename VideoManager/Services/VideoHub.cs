@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
 using VideoManager.Models;
@@ -10,34 +11,34 @@ namespace VideoManager.Services
         private readonly IRoomService _roomService;
         private readonly IAuth0Service _auth0Service;
         private readonly IUserService _userService;
-        private readonly VideoManagerDbContext _videoManagerDbContext;
-        //private readonly Dictionary<string, Dictionary<string, string>> roomMembers = new Dictionary<string, Dictionary<string, string>>();
 
         public VideoHub(IRoomService roomService,
             IAuth0Service auth0Service,
-            IUserService userService,
-            VideoManagerDbContext videoManagerDbContext)
+            IUserService userService)
         {
             _roomService = roomService;
             _auth0Service = auth0Service;
             _userService = userService;
-            _videoManagerDbContext = videoManagerDbContext;
         }
 
-        public async Task ReceiveSyncMessage(int roomId, string auth0Token, VideoSyncMessage videoSyncMessage)
+        public async Task ReceiveSyncMessage(int syncId, string auth0Token, VideoSyncMessage videoSyncMessage)
         {
-            Room room = await _roomService.Get(roomId);
+            Room room = await _roomService.Get(syncId);
             string auth0UserId = await _auth0Service.GetAuth0UserId(auth0Token);
             int? userId = await _userService.GetUserIdByAuthId(auth0UserId);
 
-            if ((!room.OwnerId.HasValue || room.OwnerId == userId) && userId.HasValue)
+            if (room != null)
             {
-                if (!room.OwnerId.HasValue)
-                {
-                    room.OwnerId = userId;
-                }
+                //if ((!room.OwnerId.HasValue || room.OwnerId == userId) && userId.HasValue)
+                //{
+                //    if (!room.OwnerId.HasValue)
+                //    {
+                //        room.OwnerId = userId;
+                //    }
 
-                await Clients.OthersInGroup(roomId.ToString()).SendAsync("VideoSyncMessage", videoSyncMessage);
+                //    await Clients.OthersInGroup(syncId.ToString()).SendAsync("VideoSyncMessage", videoSyncMessage);
+                //}
+                await Clients.OthersInGroup(syncId.ToString()).SendAsync("VideoSyncMessage", videoSyncMessage);
             }
         }
 
@@ -46,9 +47,9 @@ namespace VideoManager.Services
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task<string> JoinRoom(string roomName)
+        public async Task<string> JoinRoom(int syncId)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, roomName);
+            await Groups.AddToGroupAsync(Context.ConnectionId, syncId.ToString());
 
             return Context.ConnectionId;
         }

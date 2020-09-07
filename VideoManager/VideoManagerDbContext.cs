@@ -12,9 +12,8 @@ namespace VideoManager
     {
         public DbSet<Video> Videos { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<Playlist> Playlists { get; set; }
         public DbSet<Room> Rooms { get; set; }
-        public DbSet<PlaylistVideo> PlaylistVideos { get; set; }
+        public DbSet<RoomVideo> RoomVideos { get; set; }
 
         private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -65,18 +64,13 @@ namespace VideoManager
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-           modelBuilder.Entity<PlaylistVideo>()
-                .HasKey(x => new { x.PlaylistId, x.VideoId });
+            modelBuilder.Entity<RoomVideo>()
+                 .HasKey(x => new { x.RoomId, x.VideoId });
 
-            modelBuilder.Entity<PlaylistVideo>()
-                .HasOne(pt => pt.Video)
-                .WithMany(p => p.PlaylistVideos)
-                .HasForeignKey(pt => pt.VideoId);
-
-            modelBuilder.Entity<PlaylistVideo>()
-                .HasOne(pt => pt.Playlist)
-                .WithMany(t => t.PlaylistVideos)
-                .HasForeignKey(pt => pt.PlaylistId);
+            modelBuilder.Entity<RoomVideo>()
+                .HasOne(pt => pt.Room)
+                .WithMany(t => t.RoomVideos)
+                .HasForeignKey(pt => pt.RoomId);
         }
     }
 }

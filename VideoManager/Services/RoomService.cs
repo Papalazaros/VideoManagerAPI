@@ -11,6 +11,7 @@ namespace VideoManager.Services
     {
         Task<Room> Get(int roomId);
         Task<IEnumerable<Room>> GetAll();
+        Task<Room> Create(string name);
     }
 
     public class RoomService : IRoomService
@@ -29,12 +30,29 @@ namespace VideoManager.Services
 
         public async Task<Room> Get(int roomId)
         {
-            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId);
+            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == UserId);
+        }
+
+        public async Task<Room> GetVideos(int roomId)
+        {
+            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == UserId);
         }
 
         public async Task<IEnumerable<Room>> GetAll()
         {
             return await _videoManagerDbContext.Rooms.Where(x => x.CreatedByUserId == UserId).ToListAsync();
+        }
+
+        public async Task<Room> Create(string name)
+        {
+            Room room = new Room
+            {
+                Name = name
+            };
+
+            await _videoManagerDbContext.Rooms.AddAsync(room);
+            await _videoManagerDbContext.SaveChangesAsync();
+            return room;
         }
     }
 }

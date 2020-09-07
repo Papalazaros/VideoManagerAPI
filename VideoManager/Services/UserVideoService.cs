@@ -33,32 +33,30 @@ namespace VideoManager.Services
         public UserVideoService(ILogger<UserVideoService> logger,
             VideoManagerDbContext videoManagerDbContext,
             IFileService fileService,
-            IEncoder encodingService,
             IHttpContextAccessor httpContextAccessor)
         {
             _logger = logger;
             _videoManagerDbContext = videoManagerDbContext;
             _fileService = fileService;
-            _encodingService = encodingService;
             _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<IEnumerable<Video>> GetAllByRoomId(int roomId)
         {
             Room room = await _videoManagerDbContext.Rooms
-                .Include(x => x.Playlist)
+                .Include(x => x.RoomVideos)
                 .FirstOrDefaultAsync(x => x.RoomId == roomId);
 
             if (room == null) return Enumerable.Empty<Video>();
 
-            return room.Playlist.PlaylistVideos.Select(x => x.Video);
+            return room.RoomVideos.Select(x => x.Video);
         }
 
         public async Task<List<Video>> GetRandom(VideoStatus? videoStatus, int count = 1)
         {
             List<Video> availableVideos = await _videoManagerDbContext.Videos
                 .AsNoTracking()
-                .Where(x => !videoStatus.HasValue || x.Status == videoStatus)
+                .Where(x => (!UserId.HasValue || x.CreatedByUserId == UserId) && (!videoStatus.HasValue || x.Status == videoStatus))
                 .ToListAsync();
 
             List<Video> videos = new List<Video>(count);
@@ -79,13 +77,13 @@ namespace VideoManager.Services
         public async Task<Video> Get(int videoId)
         {
             return await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.VideoId == videoId && x.CreatedByUserId == UserId);
+                .FirstOrDefaultAsync(x => x.VideoId == videoId && (!UserId.HasValue || x.CreatedByUserId == UserId));
         }
 
         public async Task<Video> Delete(int videoId)
         {
             Video video = await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.VideoId == videoId && x.CreatedByUserId == UserId);
+                .FirstOrDefaultAsync(x => x.VideoId == videoId && (!UserId.HasValue || x.CreatedByUserId == UserId));
 
             if (video != null)
             {
@@ -94,6 +92,12 @@ namespace VideoManager.Services
             }
 
             return video;
+        }
+
+        public async Task<Video> FindByOriginalVideoName(string originalVideoName)
+        {
+            return await _videoManagerDbContext.Videos
+                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && (!UserId.HasValue || x.CreatedByUserId == UserId));
         }
 
         public async Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles)
@@ -115,12 +119,6 @@ namespace VideoManager.Services
             return videos;
         }
 
-        public async Task<Video> FindByOriginalVideoName(string originalVideoName)
-        {
-            return await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && x.CreatedByUserId == UserId);
-        }
-
         public async Task<Video> Create(IFormFile formFile)
         {
             Video video = CreateVideoFromIFormFile(formFile);
@@ -136,7 +134,7 @@ namespace VideoManager.Services
         {
             return await _videoManagerDbContext.Videos
                 .AsNoTracking()
-                .Where(x => x.CreatedByUserId == UserId && (!videoStatus.HasValue || x.Status == videoStatus))
+                .Where(x => (!UserId.HasValue || x.CreatedByUserId == UserId) && (!videoStatus.HasValue || x.Status == videoStatus))
                 .ToListAsync();
         }
 

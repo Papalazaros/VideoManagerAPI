@@ -39,7 +39,7 @@ namespace VideoManager.Models
         public TimeSpan? EncodeTime { get; set; }
 
         [JsonIgnore]
-        public ICollection<PlaylistVideo> PlaylistVideos { get; set; }
+        public ICollection<RoomVideo> PlaylistVideos { get; set; }
 
         [Required]
         public string IpAddress { get; set; }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace VideoManager.Models
 {
@@ -10,14 +11,8 @@ namespace VideoManager.Models
         [Required]
         public string Name { get; set; }
 
-        public int? OwnerId { get; set; }
-
-        public User Owner { get; set; }
-
         public bool IsPrivate { get; set; } = true;
 
-        public int PlaylistId { get; set; }
-
-        public Playlist Playlist { get; set; }
+        public ICollection<RoomVideo> RoomVideos { get; set; }
     }
 }

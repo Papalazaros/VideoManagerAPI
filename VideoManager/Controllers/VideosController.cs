@@ -49,7 +49,7 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<GetVideoDto>> GetAllVideos(VideoStatus? videoStatus)
+        public async Task<IEnumerable<GetVideoDto>> GetAll(VideoStatus? videoStatus)
         {
             return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetAll(videoStatus));
         }

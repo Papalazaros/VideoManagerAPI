@@ -1,10 +1,10 @@
 ﻿namespace VideoManager.Models
 {
-    public class PlaylistVideo
+    public class RoomVideo
     {
-        public int PlaylistId { get; set; }
+        public int RoomId { get; set; }
 
-        public Playlist Playlist { get; set; }
+        public Room Room { get; set; }
 
         public int VideoId { get; set; }
 
