@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
 using FluentValidation.Results;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -43,12 +41,12 @@ namespace VideoManager.Controllers
             _mapper = mapper;
         }
 
-        //[HttpGet]
-        //[Route("Random")]
-        //public async Task<IEnumerable<GetVideoDto>> GetRandomVideoId(int count)
-        //{
-        //    return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetRandom(count));
-        //}
+        [HttpGet]
+        [Route("Random")]
+        public async Task<IEnumerable<GetVideoDto>> GetRandomVideoId(int count)
+        {
+            return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetRandom(VideoStatus.Ready, count));
+        }
 
         [HttpGet]
         public async Task<IEnumerable<GetVideoDto>> GetAllVideos(VideoStatus? videoStatus)

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace VideoManager.Models.Dto
+﻿namespace VideoManager.Models.Dto
 {
     public class PostVideoDto
     {

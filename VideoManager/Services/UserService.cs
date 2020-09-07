@@ -2,8 +2,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using VideoManager.Models;
 
@@ -45,8 +43,7 @@ namespace VideoManager.Services
                 {
                     user = new User
                     {
-                        Auth0Id = auth0Id,
-                        EmailAddress = user.EmailAddress
+                        Auth0Id = auth0Id
                     };
 
                     await _videoManagerDbContext.Users.AddAsync(user);

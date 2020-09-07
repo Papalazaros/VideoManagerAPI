@@ -19,6 +19,7 @@ namespace VideoManager.Services
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
         Task<Video> Delete(int videoId);
         Task<Video> FindByOriginalVideoName(string originalVideoName);
+        Task<List<Video>> GetRandom(VideoStatus? videoStatus, int count = 1);
     }
 
     public class UserVideoService : IUserVideoService
@@ -26,8 +27,6 @@ namespace VideoManager.Services
         private readonly ILogger<UserVideoService> _logger;
         private readonly VideoManagerDbContext _videoManagerDbContext;
         private readonly IFileService _fileService;
-        private readonly IEncoder _encodingService;
-        private static readonly DateTime _encodingCooldown = DateTime.UtcNow.AddMinutes(-30);
         private readonly IHttpContextAccessor _httpContextAccessor;
         private int? UserId => (int?)_httpContextAccessor.HttpContext?.Items["UserId"];
 
@@ -55,26 +54,27 @@ namespace VideoManager.Services
             return room.Playlist.PlaylistVideos.Select(x => x.Video);
         }
 
-        //public async Task<List<Video>> GetRandom(int count)
-        //{
-        //    List<Video> availableVideoIds = await _videoManagerDbContext.Videos
-        //        .AsNoTracking()
-        //        .Where(x => x.Status == VideoStatus.Ready)
-        //        .ToListAsync();
+        public async Task<List<Video>> GetRandom(VideoStatus? videoStatus, int count = 1)
+        {
+            List<Video> availableVideos = await _videoManagerDbContext.Videos
+                .AsNoTracking()
+                .Where(x => !videoStatus.HasValue || x.Status == videoStatus)
+                .ToListAsync();
 
-        //    List<Video> videos = new List<Video>(count);
+            List<Video> videos = new List<Video>(count);
 
-        //    if (availableVideoIds.Count == 0) return videos;
+            if (availableVideos.Count == 0 || count == 0) return videos;
+            if (availableVideos.Count <= count) return availableVideos;
 
-        //    Random random = new Random();
+            Random random = new Random();
 
-        //    for(int i = 0; i < count; i++)
-        //    {
-        //        videos.Add(availableVideoIds[random.Next(0, availableVideoIds.Count - 1)]);
-        //    }
+            for (int i = 0; i < count; i++)
+            {
+                videos.Add(availableVideos[random.Next(0, availableVideos.Count - 1)]);
+            }
 
-        //    return videos;
-        //}
+            return videos;
+        }
 
         public async Task<Video> Get(int videoId)
         {
@@ -118,7 +118,7 @@ namespace VideoManager.Services
         public async Task<Video> FindByOriginalVideoName(string originalVideoName)
         {
             return await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName);
+                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && x.CreatedByUserId == UserId);
         }
 
         public async Task<Video> Create(IFormFile formFile)

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace VideoManager.Models
 {
@@ -8,9 +6,6 @@ namespace VideoManager.Models
     {
         [Key]
         public int UserId { get; set; }
-
-        [Required]
-        public string EmailAddress { get; set; }
 
         [Required]
         public string Auth0Id { get; set; }

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace VideoManager.Models
+﻿namespace VideoManager.Models
 {
     public class VideoSyncMessage
     {
