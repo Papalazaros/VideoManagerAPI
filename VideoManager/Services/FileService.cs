@@ -37,8 +37,7 @@ namespace VideoManager.Services
             {
                 File.Copy(sourceFilePath, video.GetEncodedFilePath(), true);
                 Delete(sourceFilePath);
-
-                if (video.OriginalType != video.EncodedType) Delete(video.GetOriginalFilePath());
+                Delete(video.GetOriginalFilePath());
             }
             catch (Exception e)
             {

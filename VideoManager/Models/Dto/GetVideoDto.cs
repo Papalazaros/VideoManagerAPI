@@ -7,7 +7,7 @@ namespace VideoManager.Models.Dto
 {
     public class GetVideoDto
     {
-        public Guid VideoId { get; set; }
+        public int VideoId { get; set; }
         public string OriginalFileName { get; set; }
         public long? Length { get; set; }
         public int? DurationInSeconds { get; set; }

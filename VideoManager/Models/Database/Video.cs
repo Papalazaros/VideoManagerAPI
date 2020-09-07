@@ -9,9 +9,9 @@ namespace VideoManager.Models
     {
         public const string Directory = "Videos";
 
-        public string GetOriginalFilePath() => $@"{Directory}\{VideoId}{OriginalType}";
+        public string GetOriginalFilePath() => $@"{Directory}\{OriginalFileName}";
         public string GetEncodedFilePath() => $@"{Directory}\{VideoId}{EncodedType}";
-        public override string ToString() => $"Guid: {VideoId}\nOriginalFileName: {OriginalFileName}";
+        public override string ToString() => $"Id: {VideoId}\nOriginalFileName: {OriginalFileName}";
 
         [Key]
         public int VideoId { get; set; }

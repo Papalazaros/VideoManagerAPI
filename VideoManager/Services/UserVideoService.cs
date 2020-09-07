@@ -108,9 +108,9 @@ namespace VideoManager.Services
                 fileCreationTasks.Add(_fileService.Create(formFile.OpenReadStream(), video.GetOriginalFilePath()));
             }
 
-            await Task.WhenAll(fileCreationTasks);
             await _videoManagerDbContext.Videos.AddRangeAsync(videos);
             await _videoManagerDbContext.SaveChangesAsync();
+            await Task.WhenAll(fileCreationTasks);
 
             return videos;
         }
@@ -125,18 +125,9 @@ namespace VideoManager.Services
         {
             Video video = CreateVideoFromIFormFile(formFile);
 
-            Playlist playlist = await _videoManagerDbContext.Playlists.FirstOrDefaultAsync(x => x.Name == "DEFAULT");
-
-            PlaylistVideo playlistVideo = new PlaylistVideo
-            {
-                VideoId = video.VideoId,
-                PlaylistId = playlist.PlaylistId
-            };
-
-            await _fileService.Create(formFile.OpenReadStream(), video.GetOriginalFilePath());
             await _videoManagerDbContext.Videos.AddAsync(video);
-            await _videoManagerDbContext.PlaylistVideos.AddAsync(playlistVideo);
             await _videoManagerDbContext.SaveChangesAsync();
+            await _fileService.Create(formFile.OpenReadStream(), video.GetOriginalFilePath());
 
             return video;
         }
@@ -151,7 +142,6 @@ namespace VideoManager.Services
 
         private Video CreateVideoFromIFormFile(IFormFile formFile)
         {
-            Guid guid = Guid.NewGuid();
             string fileExtension = Path.GetExtension(formFile.FileName);
 
             return new Video

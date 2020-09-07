@@ -10,8 +10,8 @@ using VideoManager;
 namespace VideoManager.Migrations
 {
     [DbContext(typeof(VideoManagerDbContext))]
-    [Migration("20200907161140_RemoveKey")]
-    partial class RemoveKey
+    [Migration("20200907161513_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

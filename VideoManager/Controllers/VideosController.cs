@@ -57,14 +57,14 @@ namespace VideoManager.Controllers
         }
 
         [HttpDelete]
-        [Route("{videoId:Guid}")]
+        [Route("{videoId:int}")]
         public async Task<Video> Delete(int videoId)
         {
             return await _videoService.Delete(videoId);
         }
 
         [HttpGet]
-        [Route("{videoId:Guid}/Stream")]
+        [Route("{videoId:int}/Stream")]
         public async Task<IActionResult> GetStream(int videoId)
         {
             Video video = await _videoService.Get(videoId);
@@ -77,7 +77,7 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        [Route("{videoId:Guid}/Thumbnail")]
+        [Route("{videoId:int}/Thumbnail")]
         public async Task<IActionResult> GetThumbnail(int videoId)
         {
             Video video = await _videoService.Get(videoId);
@@ -90,7 +90,7 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        [Route("{videoId:Guid}")]
+        [Route("{videoId:int}")]
         public async Task<Video> GetVideoDetails(int videoId)
         {
             return await _videoService.Get(videoId);

@@ -99,9 +99,7 @@ namespace VideoManager
 
             //app.UseHttpsRedirection();
 
-            app.UseWhen(context => !context.Request.Path.StartsWithSegments("/videoHub")
-                && !context.Request.Path.ToString().EndsWith("Stream", StringComparison.OrdinalIgnoreCase)
-                && !context.Request.Path.ToString().EndsWith("Thumbnail", StringComparison.OrdinalIgnoreCase),
+            app.UseWhen(context => !context.Request.Path.StartsWithSegments("/videoHub"),
                 app => app.UseMiddleware(typeof(AuthenticationMiddleware)));
 
             app.UseRouting();

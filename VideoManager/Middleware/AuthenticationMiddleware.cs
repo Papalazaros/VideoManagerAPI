@@ -40,7 +40,7 @@ namespace VideoManager.Middleware
 
         public async Task InvokeAsync(HttpContext context, IAuth0Service auth0Service, IUserService userService)
         {
-            bool userVerified = false;
+            User user = null;
             StringValues authorizationHeader = context.Request.Headers["Authorization"];
 
             (string scheme, string parameter) = ExtractAuthenticationInformation(authorizationHeader);
@@ -49,19 +49,27 @@ namespace VideoManager.Middleware
                 && !string.IsNullOrWhiteSpace(parameter))
             {
                 string auth0UserId = await auth0Service.GetAuth0UserId(parameter);
-                User user = await userService.CreateOrGetByAuthId(auth0UserId);
+                user = await userService.CreateOrGetByAuthId(auth0UserId);
+            }
+            else if(context.Request.Query.TryGetValue("accessToken", out StringValues accessTokenValues) && accessTokenValues.Count > 0)
+            {
+                string accessToken = accessTokenValues[0];
 
-                if (user != null)
+                if (!string.IsNullOrEmpty(accessToken))
                 {
-                    userVerified = true;
-                    context.Items["UserId"] = user.UserId;
-                    await _next(context);
+                    string auth0UserId = await auth0Service.GetAuth0UserId(accessToken);
+                    user = await userService.CreateOrGetByAuthId(auth0UserId);
                 }
             }
 
-            if (!userVerified)
+            if (user == null)
             {
                 context.Response.StatusCode = 401;
+            }
+            else
+            {
+                context.Items["UserId"] = user.UserId;
+                await _next(context);
             }
         }
     }
