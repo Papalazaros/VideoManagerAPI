@@ -18,7 +18,7 @@ namespace VideoManager.Services
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
         Task<Video> Delete(int? userId, int videoId);
         Task<Video> FindByOriginalVideoName(int? userId, string originalVideoName);
-        Task<List<Video>> GetRandom(int? userId, int roomId, VideoStatus? videoStatus, int count = 1);
+        Task<List<Video>> GetRandom(int? userId, int? roomId, VideoStatus? videoStatus, int count = 1);
     }
 
     public class UserVideoService : IUserVideoService
@@ -39,10 +39,9 @@ namespace VideoManager.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<List<Video>> GetRandom(int? userId, int roomId, VideoStatus? videoStatus, int count = 1)
+        public async Task<List<Video>> GetRandom(int? userId, int? roomId, VideoStatus? videoStatus, int count = 1)
         {
             List<Video> availableVideos = await GetAll(userId, roomId, videoStatus);
-
             List<Video> videos = new List<Video>(count);
 
             if (availableVideos.Count == 0 || count == 0) return videos;
@@ -52,7 +51,7 @@ namespace VideoManager.Services
 
             for (int i = 0; i < count; i++)
             {
-                videos.Add(availableVideos[random.Next(0, availableVideos.Count - 1)]);
+                videos.Add(availableVideos[random.Next(0, availableVideos.Count)]);
             }
 
             return videos;

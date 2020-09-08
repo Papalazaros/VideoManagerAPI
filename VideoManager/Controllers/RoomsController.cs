@@ -34,10 +34,10 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        [Route("{roomId:int}/Videos")]
-        public async Task<IActionResult> GetVideos(int roomId)
+        [Route("{roomId:int}/AddVideo")]
+        public async Task<IActionResult> AddVideo(int roomId, int videoId)
         {
-            return Ok(await _roomService.Get(roomId));
+            return Ok(await _roomService.AddVideo(roomId, videoId));
         }
 
         [HttpPost]

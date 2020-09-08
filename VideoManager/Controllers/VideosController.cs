@@ -30,13 +30,13 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("Random")]
-        public async Task<IEnumerable<GetVideoDto>> GetRandom(int count, int roomId, VideoStatus? videoStatus = VideoStatus.Ready)
+        public async Task<IEnumerable<GetVideoDto>> GetRandom(int count, int? roomId, VideoStatus? videoStatus = VideoStatus.Ready)
         {
             return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetRandom(_userId, roomId, videoStatus, count));
         }
 
         [HttpGet]
-        public async Task<IEnumerable<GetVideoDto>> GetAll(int roomId, VideoStatus? videoStatus)
+        public async Task<IEnumerable<GetVideoDto>> GetAll(int? roomId, VideoStatus? videoStatus)
         {
             return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetAll(_userId, roomId, videoStatus));
         }

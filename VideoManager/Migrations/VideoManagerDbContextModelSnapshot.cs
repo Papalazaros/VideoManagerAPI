@@ -110,10 +110,6 @@ namespace VideoManager.Migrations
                     b.Property<string>("EncodedType")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("IpAddress")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int?>("ModifiedByUserId")
                         .HasColumnType("int");
 

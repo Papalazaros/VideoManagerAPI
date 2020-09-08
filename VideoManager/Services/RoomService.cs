@@ -12,6 +12,7 @@ namespace VideoManager.Services
         Task<Room> Get(int roomId);
         Task<IEnumerable<Room>> GetAll();
         Task<Room> Create(string name);
+        Task<RoomVideo> AddVideo(int roomId, int videoId);
     }
 
     public class RoomService : IRoomService
@@ -48,6 +49,15 @@ namespace VideoManager.Services
             await _videoManagerDbContext.Rooms.AddAsync(room);
             await _videoManagerDbContext.SaveChangesAsync();
             return room;
+        }
+
+        public async Task<RoomVideo> AddVideo(int roomId, int videoId)
+        {
+            RoomVideo roomVideo = new RoomVideo { RoomId = roomId, VideoId = videoId };
+            await _videoManagerDbContext.RoomVideos.AddAsync(roomVideo);
+            await _videoManagerDbContext.SaveChangesAsync();
+
+            return roomVideo;
         }
     }
 }
