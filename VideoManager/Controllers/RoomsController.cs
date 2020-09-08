@@ -27,6 +27,13 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
+        [Route("Memberships")]
+        public async Task<IActionResult> GetMemberships()
+        {
+            return Ok(await _roomService.GetMemberships());
+        }
+
+        [HttpGet]
         [Route("{roomId:int}")]
         public async Task<IActionResult> Get(int roomId)
         {
@@ -38,6 +45,20 @@ namespace VideoManager.Controllers
         public async Task<IActionResult> AddVideo(int roomId, int videoId)
         {
             return Ok(await _roomService.AddVideo(roomId, videoId));
+        }
+
+        [HttpGet]
+        [Route("{roomId:int}/AddMember")]
+        public async Task<IActionResult> AddMember(int roomId, string memberEmail)
+        {
+            return Ok(await _roomService.AddMember(roomId, memberEmail));
+        }
+
+        [HttpGet]
+        [Route("{roomId:int}/CanView")]
+        public async Task<IActionResult> CanViewRoom(int roomId)
+        {
+            return Ok(await _roomService.CanViewRoom(roomId));
         }
 
         [HttpPost]

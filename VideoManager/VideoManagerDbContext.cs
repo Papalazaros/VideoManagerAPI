@@ -14,6 +14,7 @@ namespace VideoManager
         public DbSet<User> Users { get; set; }
         public DbSet<Room> Rooms { get; set; }
         public DbSet<RoomVideo> RoomVideos { get; set; }
+        public DbSet<RoomMember> RoomMembers { get; set; }
 
         private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -67,10 +68,8 @@ namespace VideoManager
             modelBuilder.Entity<RoomVideo>()
                  .HasKey(x => new { x.RoomId, x.VideoId });
 
-            modelBuilder.Entity<RoomVideo>()
-                .HasOne(pt => pt.Room)
-                .WithMany(t => t.RoomVideos)
-                .HasForeignKey(pt => pt.RoomId);
+            modelBuilder.Entity<RoomMember>()
+                 .HasKey(x => new { x.RoomId, x.UserId });
         }
     }
 }

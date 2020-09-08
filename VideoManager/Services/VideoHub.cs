@@ -13,19 +13,19 @@ namespace VideoManager.Services
         private readonly IUserService _userService;
 
         public VideoHub(IRoomService roomService,
-            IAuthService auth0Service,
+            IAuthService authService,
             IUserService userService)
         {
             _roomService = roomService;
-            _authService = auth0Service;
+            _authService = authService;
             _userService = userService;
         }
 
-        public async Task ReceiveSyncMessage(int roomId, string auth0Token, VideoSyncMessage videoSyncMessage)
+        public async Task ReceiveSyncMessage(int roomId, string authToken, VideoSyncMessage videoSyncMessage)
         {
             Room room = await _roomService.Get(roomId);
-            string auth0UserId = await _authService.GetUserId(auth0Token);
-            User user = await _userService.CreateOrGetByAuthId(auth0UserId);
+            AuthUser authUser = await _authService.GetUser(authToken);
+            User user = await _userService.CreateOrGetByAuthUser(authUser);
 
             if (room != null && user != null && room.CreatedByUserId == user.UserId)
             {

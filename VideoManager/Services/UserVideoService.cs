@@ -26,17 +26,14 @@ namespace VideoManager.Services
         private readonly ILogger<UserVideoService> _logger;
         private readonly VideoManagerDbContext _videoManagerDbContext;
         private readonly IFileService _fileService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UserVideoService(ILogger<UserVideoService> logger,
             VideoManagerDbContext videoManagerDbContext,
-            IFileService fileService,
-            IHttpContextAccessor httpContextAccessor)
+            IFileService fileService)
         {
             _logger = logger;
             _videoManagerDbContext = videoManagerDbContext;
             _fileService = fileService;
-            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<List<Video>> GetRandom(int? userId, int? roomId, VideoStatus? videoStatus, int count = 1)
@@ -71,7 +68,7 @@ namespace VideoManager.Services
                     .AsNoTracking()
                     .Where(x => x.RoomId == roomId)
                     .Select(x => x.Video)
-                    .Where(x => (!userId.HasValue || x.CreatedByUserId == userId) && (!videoStatus.HasValue || x.Status == videoStatus))
+                    .Where(x => !videoStatus.HasValue || x.Status == videoStatus)
                     .ToListAsync();
             }
             else

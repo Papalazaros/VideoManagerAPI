@@ -9,7 +9,7 @@ namespace VideoManager.Services
 {
     public interface IUserService
     {
-        Task<User> CreateOrGetByAuthId(string auth0Id);
+        Task<User> CreateOrGetByAuthUser(AuthUser authUser);
     }
 
     public class UserService : IUserService
@@ -27,25 +27,26 @@ namespace VideoManager.Services
             _memoryCache = memoryCache;
         }
 
-        public async Task<User> CreateOrGetByAuthId(string auth0Id)
+        public async Task<User> CreateOrGetByAuthUser(AuthUser authUser)
         {
-            if (string.IsNullOrEmpty(auth0Id)) return null;
-            if (_memoryCache.TryGetValue(auth0Id, out User user)) return user;
+            if (authUser == null) return null;
+            if (_memoryCache.TryGetValue(authUser.sub, out User user)) return user;
 
-            user = await _videoManagerDbContext.Users.FirstOrDefaultAsync(x => x.Auth0Id == auth0Id);
+            user = await _videoManagerDbContext.Users.FirstOrDefaultAsync(x => x.Auth0Id == authUser.sub);
 
             if (user == null)
             {
                 user = new User
                 {
-                    Auth0Id = auth0Id
+                    Auth0Id = authUser.sub,
+                    Email = authUser.email.ToLower()
                 };
 
                 await _videoManagerDbContext.Users.AddAsync(user);
                 await _videoManagerDbContext.SaveChangesAsync();
             }
 
-            _memoryCache.Set(auth0Id, user);
+            _memoryCache.Set(authUser.sub, user);
 
             return user;
         }

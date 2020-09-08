@@ -9,5 +9,8 @@ namespace VideoManager.Models
 
         [Required]
         public string Auth0Id { get; set; }
+
+        [Required]
+        public string Email { get; set; }
     }
 }

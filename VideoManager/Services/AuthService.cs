@@ -11,7 +11,7 @@ namespace VideoManager.Services
 {
     public interface IAuthService
     {
-        Task<string> GetUserId(string token);
+        Task<AuthUser> GetUser(string token);
     }
 
     public class AuthService : IAuthService
@@ -25,25 +25,23 @@ namespace VideoManager.Services
             _memoryCache = memoryCache;
         }
 
-        public async Task<string> GetUserId(string token)
+        public async Task<AuthUser> GetUser(string token)
         {
-            if (_memoryCache.TryGetValue(token, out string userId)) return userId;
+            if (_memoryCache.TryGetValue(token, out AuthUser user)) return user;
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://dev-fuzknswu.auth0.com/userinfo");
             httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
             HttpResponseMessage httpResponseMessage = await _httpClient.SendAsync(httpRequestMessage);
 
             if (!httpResponseMessage.IsSuccessStatusCode) return null;
 
             Stream stream = await httpResponseMessage.Content.ReadAsStreamAsync();
 
-            AuthUser auth0User = await JsonSerializer.DeserializeAsync<AuthUser>(stream);
-            userId = auth0User?.sub;
+            user = await JsonSerializer.DeserializeAsync<AuthUser>(stream);
 
-            if (!string.IsNullOrEmpty(userId)) _memoryCache.Set(token, userId, TimeSpan.FromSeconds(86400));
+            if (user != null) _memoryCache.Set(token, user, TimeSpan.FromSeconds(86400));
 
-            return userId;
+            return user;
         }
     }
 }

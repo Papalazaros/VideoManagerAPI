@@ -35,28 +35,27 @@ namespace VideoManager.Middleware
             return (scheme, parameter);
         }
 
-        public async Task InvokeAsync(HttpContext context, IAuthService auth0Service, IUserService userService)
+        public async Task InvokeAsync(HttpContext context, IAuthService authService, IUserService userService)
         {
             User user = null;
             StringValues authorizationHeader = context.Request.Headers["Authorization"];
-
+            string accessToken = null;
             (string scheme, string parameter) = ExtractAuthenticationInformation(authorizationHeader);
 
             if (string.Equals("Bearer", scheme, StringComparison.OrdinalIgnoreCase)
                 && !string.IsNullOrWhiteSpace(parameter))
             {
-                string auth0UserId = await auth0Service.GetUserId(parameter);
-                user = await userService.CreateOrGetByAuthId(auth0UserId);
+                accessToken = parameter;
             }
             else if(context.Request.Query.TryGetValue("accessToken", out StringValues accessTokenValues) && accessTokenValues.Count > 0)
             {
-                string accessToken = accessTokenValues[0];
+                accessToken = accessTokenValues[0];
+            }
 
-                if (!string.IsNullOrEmpty(accessToken))
-                {
-                    string auth0UserId = await auth0Service.GetUserId(accessToken);
-                    user = await userService.CreateOrGetByAuthId(auth0UserId);
-                }
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                AuthUser authUser = await authService.GetUser(accessToken);
+                user = await userService.CreateOrGetByAuthUser(authUser);
             }
 
             if (user == null)

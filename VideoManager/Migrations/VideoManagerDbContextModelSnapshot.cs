@@ -54,6 +54,21 @@ namespace VideoManager.Migrations
                     b.ToTable("Rooms");
                 });
 
+            modelBuilder.Entity("VideoManager.Models.RoomMember", b =>
+                {
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RoomId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RoomMembers");
+                });
+
             modelBuilder.Entity("VideoManager.Models.RoomVideo", b =>
                 {
                     b.Property<int>("RoomId")
@@ -77,6 +92,10 @@ namespace VideoManager.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Auth0Id")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -151,6 +170,21 @@ namespace VideoManager.Migrations
                     b.HasOne("VideoManager.Models.User", "ModifiedByUser")
                         .WithMany()
                         .HasForeignKey("ModifiedByUserId");
+                });
+
+            modelBuilder.Entity("VideoManager.Models.RoomMember", b =>
+                {
+                    b.HasOne("VideoManager.Models.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VideoManager.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("VideoManager.Models.RoomVideo", b =>
