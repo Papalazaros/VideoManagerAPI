@@ -2,7 +2,7 @@
 
 namespace VideoManager.Models
 {
-    public class Auth0User
+    public class AuthUser
     {
         public string sub { get; set; }
         public string given_name { get; set; }

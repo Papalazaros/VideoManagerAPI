@@ -8,7 +8,6 @@ namespace VideoManager.Models
     public class Video : BaseEntity
     {
         public const string Directory = "Videos";
-
         public string GetOriginalFilePath() => $@"{Directory}\{OriginalFileName}";
         public string GetEncodedFilePath() => $@"{Directory}\{VideoId}{EncodedType}";
         public override string ToString() => $"Id: {VideoId}\nOriginalFileName: {OriginalFileName}";
@@ -40,9 +39,6 @@ namespace VideoManager.Models
 
         [JsonIgnore]
         public ICollection<RoomVideo> PlaylistVideos { get; set; }
-
-        [Required]
-        public string IpAddress { get; set; }
     }
 
     public enum VideoStatus

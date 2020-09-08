@@ -2,8 +2,6 @@
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,46 +17,35 @@ namespace VideoManager.Controllers
     [Route("[controller]")]
     public class VideosController : ControllerBase
     {
-        private readonly ILogger<VideosController> _logger;
         private readonly IUserVideoService _videoService;
-        private readonly IAuth0Service _auth0Service;
-        private readonly IUserService _userService;
-        private readonly IMemoryCache _memoryCache;
         private readonly IMapper _mapper;
+        private int? _userId => (int?)HttpContext?.Items["UserId"];
 
-        public VideosController(ILogger<VideosController> logger,
-            IUserVideoService videoService,
-            IAuth0Service auth0Service,
-            IUserService userService,
-            IMemoryCache memoryCache,
+        public VideosController(IUserVideoService videoService,
             IMapper mapper)
         {
-            _logger = logger;
             _videoService = videoService;
-            _auth0Service = auth0Service;
-            _userService = userService;
-            _memoryCache = memoryCache;
             _mapper = mapper;
         }
 
         [HttpGet]
         [Route("Random")]
-        public async Task<IEnumerable<GetVideoDto>> GetRandomVideoId(int count)
+        public async Task<IEnumerable<GetVideoDto>> GetRandom(int count, int roomId, VideoStatus? videoStatus = VideoStatus.Ready)
         {
-            return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetRandom(VideoStatus.Ready, count));
+            return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetRandom(_userId, roomId, videoStatus, count));
         }
 
         [HttpGet]
-        public async Task<IEnumerable<GetVideoDto>> GetAll(VideoStatus? videoStatus)
+        public async Task<IEnumerable<GetVideoDto>> GetAll(int roomId, VideoStatus? videoStatus)
         {
-            return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetAll(videoStatus));
+            return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetAll(_userId, roomId, videoStatus));
         }
 
         [HttpDelete]
         [Route("{videoId:int}")]
         public async Task<Video> Delete(int videoId)
         {
-            return await _videoService.Delete(videoId);
+            return await _videoService.Delete(_userId, videoId);
         }
 
         [HttpGet]
@@ -89,7 +76,7 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{videoId:int}")]
-        public async Task<Video> GetVideoDetails(int videoId)
+        public async Task<Video> Get(int videoId)
         {
             return await _videoService.Get(videoId);
         }
@@ -108,7 +95,7 @@ namespace VideoManager.Controllers
                 ValidationResult validationResult = videoValidator.Validate(file);
 
                 if (!validationResult.IsValid) failedFiles[file.FileName] = validationResult.Errors.Select(x => x.ErrorMessage);
-                else if (await _videoService.FindByOriginalVideoName(file.FileName) != null) failedFiles[file.FileName] = new List<string> { "Duplicate file." };
+                else if (await _videoService.FindByOriginalVideoName(_userId, file.FileName) != null) failedFiles[file.FileName] = new List<string> { "Duplicate file." };
             }
 
             IEnumerable<IFormFile> validVideos = files.Where(x => !failedFiles.ContainsKey(x.FileName));
@@ -126,7 +113,7 @@ namespace VideoManager.Controllers
             ValidationResult validationResult = videoValidator.Validate(file);
 
             if (!validationResult.IsValid) return new BadRequestObjectResult(validationResult.Errors.Select(x => x.ErrorMessage));
-            else if (await _videoService.FindByOriginalVideoName(file.FileName) != null) return BadRequest(new List<string> { "Duplicate file." });
+            else if (await _videoService.FindByOriginalVideoName(_userId, file.FileName) != null) return BadRequest(new List<string> { "Duplicate file." });
 
             return Ok(_mapper.Map<Video, PostVideoDto>(await _videoService.Create(file)));
         }

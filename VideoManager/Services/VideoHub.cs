@@ -9,48 +9,33 @@ namespace VideoManager.Services
     public class VideoHub : Hub
     {
         private readonly IRoomService _roomService;
-        private readonly IAuth0Service _auth0Service;
+        private readonly IAuthService _authService;
         private readonly IUserService _userService;
 
         public VideoHub(IRoomService roomService,
-            IAuth0Service auth0Service,
+            IAuthService auth0Service,
             IUserService userService)
         {
             _roomService = roomService;
-            _auth0Service = auth0Service;
+            _authService = auth0Service;
             _userService = userService;
         }
 
-        public async Task ReceiveSyncMessage(int syncId, string auth0Token, VideoSyncMessage videoSyncMessage)
+        public async Task ReceiveSyncMessage(int roomId, string auth0Token, VideoSyncMessage videoSyncMessage)
         {
-            Room room = await _roomService.Get(syncId);
-            string auth0UserId = await _auth0Service.GetAuth0UserId(auth0Token);
-            int? userId = await _userService.GetUserIdByAuthId(auth0UserId);
+            Room room = await _roomService.Get(roomId);
+            string auth0UserId = await _authService.GetUserId(auth0Token);
+            User user = await _userService.CreateOrGetByAuthId(auth0UserId);
 
-            if (room != null)
+            if (room != null && user != null && room.CreatedByUserId == user.UserId)
             {
-                //if ((!room.OwnerId.HasValue || room.OwnerId == userId) && userId.HasValue)
-                //{
-                //    if (!room.OwnerId.HasValue)
-                //    {
-                //        room.OwnerId = userId;
-                //    }
-
-                //    await Clients.OthersInGroup(syncId.ToString()).SendAsync("VideoSyncMessage", videoSyncMessage);
-                //}
-                await Clients.OthersInGroup(syncId.ToString()).SendAsync("VideoSyncMessage", videoSyncMessage);
+                await Clients.OthersInGroup(roomId.ToString()).SendAsync("VideoSyncMessage", videoSyncMessage);
             }
         }
 
-        public override Task OnDisconnectedAsync(Exception exception)
+        public async Task<string> JoinRoom(int roomId)
         {
-            return base.OnDisconnectedAsync(exception);
-        }
-
-        public async Task<string> JoinRoom(int syncId)
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, syncId.ToString());
-
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
             return Context.ConnectionId;
         }
     }

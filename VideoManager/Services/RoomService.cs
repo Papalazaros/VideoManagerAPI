@@ -19,7 +19,7 @@ namespace VideoManager.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly VideoManagerDbContext _videoManagerDbContext;
 
-        private int? UserId => (int?)_httpContextAccessor.HttpContext?.Items["UserId"];
+        private int? _userId => (int?)_httpContextAccessor.HttpContext?.Items["UserId"];
 
         public RoomService(VideoManagerDbContext videoManagerDbContext,
             IHttpContextAccessor httpContextAccessor)
@@ -30,17 +30,12 @@ namespace VideoManager.Services
 
         public async Task<Room> Get(int roomId)
         {
-            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == UserId);
-        }
-
-        public async Task<Room> GetVideos(int roomId)
-        {
-            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == UserId);
+            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId);
         }
 
         public async Task<IEnumerable<Room>> GetAll()
         {
-            return await _videoManagerDbContext.Rooms.Where(x => x.CreatedByUserId == UserId).ToListAsync();
+            return await _videoManagerDbContext.Rooms.Where(x => x.CreatedByUserId == _userId).ToListAsync();
         }
 
         public async Task<Room> Create(string name)

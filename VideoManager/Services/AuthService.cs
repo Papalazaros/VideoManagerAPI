@@ -9,23 +9,23 @@ using VideoManager.Models;
 
 namespace VideoManager.Services
 {
-    public interface IAuth0Service
+    public interface IAuthService
     {
-        Task<string> GetAuth0UserId(string userId);
+        Task<string> GetUserId(string token);
     }
 
-    public class Auth0Service : IAuth0Service
+    public class AuthService : IAuthService
     {
         private readonly HttpClient _httpClient;
         private readonly IMemoryCache _memoryCache;
 
-        public Auth0Service(HttpClient httpClient, IMemoryCache memoryCache)
+        public AuthService(HttpClient httpClient, IMemoryCache memoryCache)
         {
             _httpClient = httpClient;
             _memoryCache = memoryCache;
         }
 
-        public async Task<string> GetAuth0UserId(string token)
+        public async Task<string> GetUserId(string token)
         {
             if (_memoryCache.TryGetValue(token, out string userId)) return userId;
 
@@ -38,7 +38,7 @@ namespace VideoManager.Services
 
             Stream stream = await httpResponseMessage.Content.ReadAsStreamAsync();
 
-            Auth0User auth0User = await JsonSerializer.DeserializeAsync<Auth0User>(stream);
+            AuthUser auth0User = await JsonSerializer.DeserializeAsync<AuthUser>(stream);
             userId = auth0User?.sub;
 
             if (!string.IsNullOrEmpty(userId)) _memoryCache.Set(token, userId, TimeSpan.FromSeconds(86400));

@@ -14,12 +14,12 @@ namespace VideoManager.Services
         Task<string> CreateThumbnail(Video video);
     }
 
-    public class FfmpegService : IEncoder
+    public class EncodeService : IEncoder
     {
-        private readonly ILogger<FfmpegService> _logger;
+        private readonly ILogger<EncodeService> _logger;
         private readonly IFileService _fileService;
 
-        public FfmpegService(ILogger<FfmpegService> logger, IFileService fileService)
+        public EncodeService(ILogger<EncodeService> logger, IFileService fileService)
         {
             _logger = logger;
             _fileService = fileService;

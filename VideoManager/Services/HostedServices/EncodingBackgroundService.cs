@@ -6,16 +6,16 @@ using VideoManager.Models;
 
 namespace VideoManager.Services
 {
-    public class EncodingService : BackgroundTaskService
+    public class EncodingBackgroundService : BackgroundTaskService
     {
         private const int _maxConcurrentTasks = 4;
 
-        public EncodingService(ILogger<EncodingService> logger, IServiceScopeFactory scopeFactory) : base(logger, scopeFactory) { }
+        public EncodingBackgroundService(ILogger<EncodingBackgroundService> logger, IServiceScopeFactory scopeFactory) : base(logger, scopeFactory) { }
 
         public override async Task<bool> DoWork()
         {
             _logger.LogInformation(
-                "EncodingService is working.");
+                "EncodeService is working.");
 
             using IServiceScope scope = _scopeFactory.CreateScope();
             IVideoManagerService videoService = scope.ServiceProvider.GetRequiredService<IVideoManagerService>();

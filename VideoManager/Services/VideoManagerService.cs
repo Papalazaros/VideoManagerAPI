@@ -22,17 +22,16 @@ namespace VideoManager.Services
     {
         private readonly ILogger<VideoManagerService> _logger;
         private readonly VideoManagerDbContext _videoManagerDbContext;
-        private readonly IEncoder _encodingService;
+        private readonly IEncoder _encoderService;
         private static readonly DateTime _encodingCooldown = DateTime.UtcNow.AddMinutes(-30);
 
         public VideoManagerService(ILogger<VideoManagerService> logger,
             VideoManagerDbContext videoManagerDbContext,
-            IFileService fileService,
             IEncoder encodingService)
         {
             _logger = logger;
             _videoManagerDbContext = videoManagerDbContext;
-            _encodingService = encodingService;
+            _encoderService = encodingService;
         }
 
         public async Task<IEnumerable<Video>> AssignDurations()
@@ -42,7 +41,7 @@ namespace VideoManager.Services
                 .ToListAsync();
 
             List<Task<int?>> videoDurationTasks = videos
-                .Select(x => _encodingService.GetVideoDurationInSeconds(x.GetEncodedFilePath()))
+                .Select(x => _encoderService.GetVideoDurationInSeconds(x.GetEncodedFilePath()))
                 .ToList();
 
             for (int i = 0; i < videoDurationTasks.Count; i++)
@@ -64,7 +63,7 @@ namespace VideoManager.Services
                 .ToListAsync();
 
             List<Task<string>> videoThumbnailTasks = videos
-                .Select(x => _encodingService.CreateThumbnail(x))
+                .Select(x => _encoderService.CreateThumbnail(x))
                 .ToList();
 
             for (int i = 0; i < videoThumbnailTasks.Count; i++)

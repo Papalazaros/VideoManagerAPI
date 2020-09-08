@@ -41,11 +41,11 @@ namespace VideoManager
 
             services.AddMemoryCache();
 
-            services.AddHttpClient<IAuth0Service, Auth0Service>();
+            services.AddHttpClient<IAuthService, AuthService>();
 
             services.AddScoped<IUserService, UserService>();
 
-            services.AddScoped<IEncoder, FfmpegService>();
+            services.AddScoped<IEncoder, EncodeService>();
 
             services.AddScoped<IFileService, FileService>();
 
@@ -55,7 +55,7 @@ namespace VideoManager
 
             services.AddScoped<IRoomService, RoomService>();
 
-            services.AddHostedService<EncodingService>();
+            services.AddHostedService<EncodingBackgroundService>();
 
             services.AddHostedService<VideoBackgroundService>();
 

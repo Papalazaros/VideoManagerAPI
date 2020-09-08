@@ -12,14 +12,13 @@ namespace VideoManager.Services
 {
     public interface IUserVideoService
     {
-        Task<List<Video>> GetAll(VideoStatus? videoStatus = null);
-        Task<IEnumerable<Video>> GetAllByRoomId(int roomId);
+        Task<List<Video>> GetAll(int? userId, int? roomId, VideoStatus? videoStatus);
         Task<Video> Get(int videoId);
         Task<Video> Create(IFormFile formFile);
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
-        Task<Video> Delete(int videoId);
-        Task<Video> FindByOriginalVideoName(string originalVideoName);
-        Task<List<Video>> GetRandom(VideoStatus? videoStatus, int count = 1);
+        Task<Video> Delete(int? userId, int videoId);
+        Task<Video> FindByOriginalVideoName(int? userId, string originalVideoName);
+        Task<List<Video>> GetRandom(int? userId, int roomId, VideoStatus? videoStatus, int count = 1);
     }
 
     public class UserVideoService : IUserVideoService
@@ -28,7 +27,6 @@ namespace VideoManager.Services
         private readonly VideoManagerDbContext _videoManagerDbContext;
         private readonly IFileService _fileService;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private int? UserId => (int?)_httpContextAccessor.HttpContext?.Items["UserId"];
 
         public UserVideoService(ILogger<UserVideoService> logger,
             VideoManagerDbContext videoManagerDbContext,
@@ -41,23 +39,9 @@ namespace VideoManager.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<IEnumerable<Video>> GetAllByRoomId(int roomId)
+        public async Task<List<Video>> GetRandom(int? userId, int roomId, VideoStatus? videoStatus, int count = 1)
         {
-            Room room = await _videoManagerDbContext.Rooms
-                .Include(x => x.RoomVideos)
-                .FirstOrDefaultAsync(x => x.RoomId == roomId);
-
-            if (room == null) return Enumerable.Empty<Video>();
-
-            return room.RoomVideos.Select(x => x.Video);
-        }
-
-        public async Task<List<Video>> GetRandom(VideoStatus? videoStatus, int count = 1)
-        {
-            List<Video> availableVideos = await _videoManagerDbContext.Videos
-                .AsNoTracking()
-                .Where(x => (!UserId.HasValue || x.CreatedByUserId == UserId) && (!videoStatus.HasValue || x.Status == videoStatus))
-                .ToListAsync();
+            List<Video> availableVideos = await GetAll(userId, roomId, videoStatus);
 
             List<Video> videos = new List<Video>(count);
 
@@ -77,13 +61,35 @@ namespace VideoManager.Services
         public async Task<Video> Get(int videoId)
         {
             return await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.VideoId == videoId && (!UserId.HasValue || x.CreatedByUserId == UserId));
+                .FirstOrDefaultAsync(x => x.VideoId == videoId);
         }
 
-        public async Task<Video> Delete(int videoId)
+        public async Task<List<Video>> GetAll(int? userId, int? roomId, VideoStatus? videoStatus)
         {
+            if (roomId.HasValue)
+            {
+                return await _videoManagerDbContext.RoomVideos
+                    .AsNoTracking()
+                    .Where(x => x.RoomId == roomId)
+                    .Select(x => x.Video)
+                    .Where(x => (!userId.HasValue || x.CreatedByUserId == userId) && (!videoStatus.HasValue || x.Status == videoStatus))
+                    .ToListAsync();
+            }
+            else
+            {
+                return await _videoManagerDbContext.Videos
+                    .AsNoTracking()
+                    .Where(x => (!userId.HasValue || x.CreatedByUserId == userId) && (!videoStatus.HasValue || x.Status == videoStatus))
+                    .ToListAsync();
+            }
+        }
+
+        public async Task<Video> Delete(int? userId, int videoId)
+        {
+            if (!userId.HasValue) return null;
+
             Video video = await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.VideoId == videoId && (!UserId.HasValue || x.CreatedByUserId == UserId));
+                .FirstOrDefaultAsync(x => x.VideoId == videoId && x.CreatedByUserId == userId);
 
             if (video != null)
             {
@@ -94,10 +100,12 @@ namespace VideoManager.Services
             return video;
         }
 
-        public async Task<Video> FindByOriginalVideoName(string originalVideoName)
+        public async Task<Video> FindByOriginalVideoName(int? userId, string originalVideoName)
         {
+            if (!userId.HasValue) return null;
+
             return await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && (!UserId.HasValue || x.CreatedByUserId == UserId));
+                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && x.CreatedByUserId == userId);
         }
 
         public async Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles)
@@ -130,14 +138,6 @@ namespace VideoManager.Services
             return video;
         }
 
-        public async Task<List<Video>> GetAll(VideoStatus? videoStatus)
-        {
-            return await _videoManagerDbContext.Videos
-                .AsNoTracking()
-                .Where(x => (!UserId.HasValue || x.CreatedByUserId == UserId) && (!videoStatus.HasValue || x.Status == videoStatus))
-                .ToListAsync();
-        }
-
         private Video CreateVideoFromIFormFile(IFormFile formFile)
         {
             string fileExtension = Path.GetExtension(formFile.FileName);
@@ -147,8 +147,7 @@ namespace VideoManager.Services
                 OriginalFileName = formFile.FileName,
                 OriginalLength = formFile.Length,
                 OriginalType = fileExtension,
-                Status = VideoStatus.Uploaded,
-                IpAddress = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString()
+                Status = VideoStatus.Uploaded
             };
         }
     }
