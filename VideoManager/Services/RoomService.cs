@@ -13,9 +13,10 @@ namespace VideoManager.Services
         Task<List<Room>> GetAll();
         Task<List<Room>> GetMemberships();
         Task<Room> Create(string name);
-        Task<RoomVideo> AddVideo(int roomId, int videoId);
-        Task<RoomMember> AddMember(int roomId, string memberEmail);
-        Task<bool> CanViewRoom(int roomId);
+        Task<RoomVideo> AddVideo(Room room, int videoId);
+        Task<RoomMember> AddMember(Room room, string memberEmail);
+        Task<bool> CanView(int roomId);
+        Task<Room> CanEdit(int roomId);
     }
 
     public class RoomService : IRoomService
@@ -59,10 +60,9 @@ namespace VideoManager.Services
             return room;
         }
 
-        public async Task<RoomMember> AddMember(int roomId, string memberEmail)
+        public async Task<RoomMember> AddMember(Room room, string memberEmail)
         {
             RoomMember roomMember = null;
-            Room room = await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId);
             User user = await _videoManagerDbContext.Users.FirstOrDefaultAsync(x => x.Email == memberEmail.ToLower());
 
             if (room != null && user != null && user.UserId != _userId)
@@ -73,7 +73,7 @@ namespace VideoManager.Services
                 {
                     roomMember = new RoomMember
                     {
-                        RoomId = roomId,
+                        RoomId = room.RoomId,
                         UserId = user.UserId
                     };
 
@@ -85,16 +85,21 @@ namespace VideoManager.Services
             return roomMember;
         }
 
-        public async Task<bool> CanViewRoom(int roomId)
+        public async Task<bool> CanView(int roomId)
         {
             Room room = await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId);
             RoomMember roomMember = await _videoManagerDbContext.RoomMembers.FirstOrDefaultAsync(x => x.UserId == _userId && x.RoomId == roomId);
             return roomMember != null || room != null;
         }
 
-        public async Task<RoomVideo> AddVideo(int roomId, int videoId)
+        public async Task<Room> CanEdit(int roomId)
         {
-            RoomVideo roomVideo = new RoomVideo { RoomId = roomId, VideoId = videoId };
+            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId);
+        }
+
+        public async Task<RoomVideo> AddVideo(Room room, int videoId)
+        {
+            RoomVideo roomVideo = new RoomVideo { RoomId = room.RoomId, VideoId = videoId };
             await _videoManagerDbContext.RoomVideos.AddAsync(roomVideo);
             await _videoManagerDbContext.SaveChangesAsync();
 

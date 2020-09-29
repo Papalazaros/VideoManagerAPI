@@ -44,21 +44,33 @@ namespace VideoManager.Controllers
         [Route("{roomId:int}/AddVideo")]
         public async Task<IActionResult> AddVideo(int roomId, int videoId)
         {
-            return Ok(await _roomService.AddVideo(roomId, videoId));
+            Room room = await _roomService.CanEdit(roomId);
+            if (room == null) return Unauthorized();
+            return Ok(await _roomService.AddVideo(room, videoId));
         }
 
         [HttpGet]
         [Route("{roomId:int}/AddMember")]
         public async Task<IActionResult> AddMember(int roomId, string memberEmail)
         {
-            return Ok(await _roomService.AddMember(roomId, memberEmail));
+            Room room = await _roomService.CanEdit(roomId);
+            if (room == null) return Unauthorized();
+            return Ok(await _roomService.AddMember(room, memberEmail));
         }
 
         [HttpGet]
         [Route("{roomId:int}/CanView")]
-        public async Task<IActionResult> CanViewRoom(int roomId)
+        public async Task<IActionResult> CanView(int roomId)
         {
-            return Ok(await _roomService.CanViewRoom(roomId));
+            return Ok(await _roomService.CanView(roomId));
+        }
+
+        [HttpGet]
+        [Route("{roomId:int}/CanView")]
+        public async Task<IActionResult> CanEdit(int roomId)
+        {
+            Room room = await _roomService.CanEdit(roomId);
+            return Ok(room != null);
         }
 
         [HttpPost]
