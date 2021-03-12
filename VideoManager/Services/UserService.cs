@@ -8,7 +8,7 @@ namespace VideoManager.Services
 {
     public interface IUserService
     {
-        Task<User> CreateOrGetByAuthUser(AuthUser authUser);
+        Task<User?> CreateOrGetByAuthUser(AuthUser authUser);
     }
 
     public class UserService : IUserService
@@ -26,26 +26,21 @@ namespace VideoManager.Services
             _memoryCache = memoryCache;
         }
 
-        public async Task<User> CreateOrGetByAuthUser(AuthUser authUser)
+        public async Task<User?> CreateOrGetByAuthUser(AuthUser authUser)
         {
-            if (authUser == null) return null;
-            if (_memoryCache.TryGetValue(authUser.sub, out User user)) return user;
+            if (_memoryCache.TryGetValue(authUser.Sub, out User? user)) return user;
 
-            user = await _videoManagerDbContext.Users.FirstOrDefaultAsync(x => x.Auth0Id == authUser.sub);
+            user = await _videoManagerDbContext.Users.FirstOrDefaultAsync(x => x.Auth0Id == authUser.Sub);
 
-            if (user == null)
+            if (user == null && !string.IsNullOrEmpty(authUser.Sub) && !string.IsNullOrEmpty(authUser.Email))
             {
-                user = new User
-                {
-                    Auth0Id = authUser.sub,
-                    Email = authUser.email.ToLower()
-                };
+                user = new User(authUser.Sub, authUser.Email.ToLower());
 
                 await _videoManagerDbContext.Users.AddAsync(user);
                 await _videoManagerDbContext.SaveChangesAsync();
             }
 
-            _memoryCache.Set(authUser.sub, user);
+            _memoryCache.Set(authUser.Sub, user);
 
             return user;
         }

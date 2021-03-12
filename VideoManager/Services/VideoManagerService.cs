@@ -62,7 +62,7 @@ namespace VideoManager.Services
                 .Where(x => x.Status == VideoStatus.Ready && string.IsNullOrEmpty(x.ThumbnailFilePath))
                 .ToListAsync();
 
-            List<Task<string>> videoThumbnailTasks = videos
+            List<Task<string?>> videoThumbnailTasks = videos
                 .Select(x => _encoderService.CreateThumbnail(x))
                 .ToList();
 
@@ -114,12 +114,12 @@ namespace VideoManager.Services
 
         private async Task<IEnumerable<Video>> DeleteMany(IEnumerable<int> videoIds)
         {
-            List<Video> videosToDelete = new List<Video>();
-            List<int> deletedVideoIds = new List<int>();
+            List<Video> videosToDelete = new();
+            List<int> deletedVideoIds = new();
 
             foreach (int videoId in videoIds)
             {
-                Video video = await _videoManagerDbContext.Videos
+                Video? video = await _videoManagerDbContext.Videos
                     .FirstOrDefaultAsync(x => x.VideoId == videoId);
 
                 if (video != null)

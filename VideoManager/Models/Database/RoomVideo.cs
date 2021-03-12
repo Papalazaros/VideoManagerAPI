@@ -1,13 +1,24 @@
-﻿namespace VideoManager.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace VideoManager.Models
 {
     public class RoomVideo
     {
+        [Key]
+        public int RoomVideoId { get; set; }
+
         public int RoomId { get; set; }
 
-        public Room Room { get; set; }
+        public Room? Room { get; set; }
 
         public int VideoId { get; set; }
 
-        public Video Video { get; set; }
+        public Video? Video { get; set; }
+
+        public RoomVideo(int roomId, int videoId)
+        {
+            RoomId = roomId;
+            VideoId = videoId;
+        }
     }
 }

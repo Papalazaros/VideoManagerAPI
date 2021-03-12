@@ -8,11 +8,15 @@ namespace VideoManager.Models
         [Key]
         public int RoomId { get; set; }
 
-        [Required]
         public string Name { get; set; }
 
         public bool IsPrivate { get; set; } = true;
 
-        public ICollection<RoomVideo> RoomVideos { get; set; }
+        public ICollection<RoomVideo>? RoomVideos { get; set; }
+
+        public Room(string name)
+        {
+            Name = name;
+        }
     }
 }

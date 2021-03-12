@@ -1,17 +1,36 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace VideoManager.Models
 {
     public class AuthUser
     {
-        public string sub { get; set; }
-        public string given_name { get; set; }
-        public string nickname { get; set; }
-        public string name { get; set; }
-        public string picture { get; set; }
-        public string locale { get; set; }
-        public DateTime updated_at { get; set; }
-        public string email { get; set; }
-        public bool email_verified { get; set; }
+        [JsonPropertyName("sub")]
+        public string? Sub { get; set; }
+
+        [JsonPropertyName("given_name")]
+        public string? GivenName { get; set; }
+
+        [JsonPropertyName("nickname")]
+        public string? Nickname { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("picture")]
+        public string? Picture { get; set; }
+
+        [JsonPropertyName("locale")]
+        public string? Locale { get; set; }
+
+        [JsonPropertyName("updated_at")]
+        public DateTime? UpdatedAt { get; set; }
+
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
+
+        [JsonPropertyName("email_verified")]
+        public bool? EmailVerified { get; set; }
+
     }
 }

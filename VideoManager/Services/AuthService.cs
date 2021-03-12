@@ -11,7 +11,7 @@ namespace VideoManager.Services
 {
     public interface IAuthService
     {
-        Task<AuthUser> GetUser(string token);
+        Task<AuthUser?> GetUser(string token);
     }
 
     public class AuthService : IAuthService
@@ -25,11 +25,11 @@ namespace VideoManager.Services
             _memoryCache = memoryCache;
         }
 
-        public async Task<AuthUser> GetUser(string token)
+        public async Task<AuthUser?> GetUser(string token)
         {
-            if (_memoryCache.TryGetValue(token, out AuthUser user)) return user;
+            if (_memoryCache.TryGetValue(token, out AuthUser? user)) return user;
 
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://dev-fuzknswu.auth0.com/userinfo");
+            HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, "https://dev-fuzknswu.auth0.com/userinfo");
             httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             HttpResponseMessage httpResponseMessage = await _httpClient.SendAsync(httpRequestMessage);
 

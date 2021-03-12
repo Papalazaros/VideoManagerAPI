@@ -13,12 +13,11 @@ namespace VideoManager.Services
     public interface IUserVideoService
     {
         Task<List<Video>> GetAll(int? userId, int? roomId, VideoStatus? videoStatus);
-        Task<Video> Get(int videoId);
+        Task<Video?> Get(int videoId);
         Task<Video> Create(IFormFile formFile);
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
-        Task<Video> Delete(int? userId, int videoId);
-        Task<Video> FindByOriginalVideoName(int? userId, string originalVideoName);
-        Task<List<Video>> GetRandom(int? userId, int? roomId, VideoStatus? videoStatus, int count = 1);
+        Task<Video?> Delete(int? userId, int videoId);
+        Task<Video?> FindByOriginalVideoName(int? userId, string originalVideoName);
     }
 
     public class UserVideoService : IUserVideoService
@@ -36,25 +35,7 @@ namespace VideoManager.Services
             _fileService = fileService;
         }
 
-        public async Task<List<Video>> GetRandom(int? userId, int? roomId, VideoStatus? videoStatus, int count = 1)
-        {
-            List<Video> availableVideos = await GetAll(userId, roomId, videoStatus);
-            List<Video> videos = new List<Video>(count);
-
-            if (availableVideos.Count == 0 || count == 0) return videos;
-            if (availableVideos.Count <= count) return availableVideos;
-
-            Random random = new Random();
-
-            for (int i = 0; i < count; i++)
-            {
-                videos.Add(availableVideos[random.Next(0, availableVideos.Count)]);
-            }
-
-            return videos;
-        }
-
-        public async Task<Video> Get(int videoId)
+        public async Task<Video?> Get(int videoId)
         {
             return await _videoManagerDbContext.Videos
                 .FirstOrDefaultAsync(x => x.VideoId == videoId);
@@ -66,9 +47,9 @@ namespace VideoManager.Services
             {
                 return await _videoManagerDbContext.RoomVideos
                     .AsNoTracking()
-                    .Where(x => x.RoomId == roomId)
-                    .Select(x => x.Video)
-                    .Where(x => !videoStatus.HasValue || x.Status == videoStatus)
+                    .Include(x => x.Video)
+                    .Where(x => x.RoomId == roomId && x.Video != null && (!videoStatus.HasValue || x.Video.Status == videoStatus))
+                    .Select(x => x.Video!)
                     .ToListAsync();
             }
             else
@@ -80,7 +61,7 @@ namespace VideoManager.Services
             }
         }
 
-        public async Task<Video> Delete(int? userId, int videoId)
+        public async Task<Video?> Delete(int? userId, int videoId)
         {
             if (!userId.HasValue) return null;
 
@@ -89,14 +70,14 @@ namespace VideoManager.Services
 
             if (video != null)
             {
-                _videoManagerDbContext.Remove(video);
+                video.Status = VideoStatus.Deleted;
                 await _videoManagerDbContext.SaveChangesAsync();
             }
 
             return video;
         }
 
-        public async Task<Video> FindByOriginalVideoName(int? userId, string originalVideoName)
+        public async Task<Video?> FindByOriginalVideoName(int? userId, string originalVideoName)
         {
             if (!userId.HasValue) return null;
 
@@ -106,8 +87,8 @@ namespace VideoManager.Services
 
         public async Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles)
         {
-            List<Task> fileCreationTasks = new List<Task>();
-            List<Video> videos = new List<Video>();
+            List<Task> fileCreationTasks = new();
+            List<Video> videos = new();
 
             foreach (IFormFile formFile in formFiles)
             {
@@ -134,7 +115,7 @@ namespace VideoManager.Services
             return video;
         }
 
-        private Video CreateVideoFromIFormFile(IFormFile formFile)
+        private static Video CreateVideoFromIFormFile(IFormFile formFile)
         {
             string fileExtension = Path.GetExtension(formFile.FileName);
 

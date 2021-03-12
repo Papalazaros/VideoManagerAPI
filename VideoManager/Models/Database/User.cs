@@ -7,10 +7,14 @@ namespace VideoManager.Models
         [Key]
         public int UserId { get; set; }
 
-        [Required]
         public string Auth0Id { get; set; }
 
-        [Required]
         public string Email { get; set; }
+
+        public User(string auth0Id, string email)
+        {
+            Auth0Id = auth0Id;
+            Email = email;
+        }
     }
 }

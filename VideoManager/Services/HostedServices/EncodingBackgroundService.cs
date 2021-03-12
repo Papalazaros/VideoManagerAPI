@@ -25,7 +25,7 @@ namespace VideoManager.Services
 
             VideoManagerDbContext videoManagerDbContext = scope.ServiceProvider.GetRequiredService<VideoManagerDbContext>();
             IEncoder encodingService = scope.ServiceProvider.GetRequiredService<IEncoder>();
-            List<Task<EncodeResult>> encodingTasks = new List<Task<EncodeResult>>(videos.Count);
+            List<Task<EncodeResult>> encodingTasks = new(videos.Count);
 
             videoManagerDbContext.UpdateRange(videos);
 

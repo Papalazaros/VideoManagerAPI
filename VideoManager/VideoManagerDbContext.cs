@@ -10,11 +10,11 @@ namespace VideoManager
 {
     public class VideoManagerDbContext : DbContext
     {
-        public DbSet<Video> Videos { get; set; }
-        public DbSet<User> Users { get; set; }
-        public DbSet<Room> Rooms { get; set; }
-        public DbSet<RoomVideo> RoomVideos { get; set; }
-        public DbSet<RoomMember> RoomMembers { get; set; }
+        public DbSet<Video> Videos => Set<Video>();
+        public DbSet<User> Users => Set<User>();
+        public DbSet<Room> Rooms => Set<Room>();
+        public DbSet<RoomVideo> RoomVideos => Set<RoomVideo>();
+        public DbSet<RoomMember> RoomMembers => Set<RoomMember>();
 
         private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -38,7 +38,7 @@ namespace VideoManager
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             AddTimestamps();
-            return await base.SaveChangesAsync();
+            return await base.SaveChangesAsync(cancellationToken);
         }
 
         private void AddTimestamps()

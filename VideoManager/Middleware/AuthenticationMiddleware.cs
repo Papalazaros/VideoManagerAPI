@@ -16,10 +16,10 @@ namespace VideoManager.Middleware
             _next = next;
         }
 
-        private (string, string) ExtractAuthenticationInformation(StringValues authorizationHeader)
+        private static (string?, string?) ExtractAuthenticationInformation(StringValues authorizationHeader)
         {
-            string scheme = null;
-            string parameter = null;
+            string? scheme = null;
+            string? parameter = null;
 
             if (string.IsNullOrWhiteSpace(authorizationHeader)) return (scheme, parameter);
 
@@ -37,10 +37,10 @@ namespace VideoManager.Middleware
 
         public async Task InvokeAsync(HttpContext context, IAuthService authService, IUserService userService)
         {
-            User user = null;
+            User? user = null;
             StringValues authorizationHeader = context.Request.Headers["Authorization"];
-            string accessToken = null;
-            (string scheme, string parameter) = ExtractAuthenticationInformation(authorizationHeader);
+            string? accessToken = null;
+            (string? scheme, string? parameter) = ExtractAuthenticationInformation(authorizationHeader);
 
             if (string.Equals("Bearer", scheme, StringComparison.OrdinalIgnoreCase)
                 && !string.IsNullOrWhiteSpace(parameter))
@@ -54,8 +54,12 @@ namespace VideoManager.Middleware
 
             if (!string.IsNullOrEmpty(accessToken))
             {
-                AuthUser authUser = await authService.GetUser(accessToken);
-                user = await userService.CreateOrGetByAuthUser(authUser);
+                AuthUser? authUser = await authService.GetUser(accessToken);
+
+                if (authUser != null)
+                {
+                    user = await userService.CreateOrGetByAuthUser(authUser);
+                }
             }
 
             if (user == null)

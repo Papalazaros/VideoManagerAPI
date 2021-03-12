@@ -11,7 +11,7 @@ namespace VideoManager.Services
     {
         Task<EncodeResult> Encode(Video video);
         Task<int?> GetVideoDurationInSeconds(string path);
-        Task<string> CreateThumbnail(Video video);
+        Task<string?> CreateThumbnail(Video video);
     }
 
     public class EncodeService : IEncoder
@@ -25,16 +25,16 @@ namespace VideoManager.Services
             _fileService = fileService;
         }
 
-        private async Task<(string, string)> RunCommandAsync(string arguments, string fileName = "ffmpeg.exe")
+        private async Task<(string?, string?)> RunCommandAsync(string arguments, string fileName = "ffmpeg.exe")
         {
             if (!File.Exists(fileName)) throw new Exception($"{fileName} not found.");
 
-            string standardOutput = null;
-            string standardError = null;
+            string? standardOutput = null;
+            string? standardError = null;
 
             try
             {
-                using Process process = new Process
+                using Process process = new()
                 {
                     StartInfo = new ProcessStartInfo
                     {
@@ -68,8 +68,8 @@ namespace VideoManager.Services
 
         public async Task<EncodeResult> Encode(Video video)
         {
-            EncodeResult encodeResult = new EncodeResult();
-            Stopwatch stopWatch = new Stopwatch();
+            EncodeResult encodeResult = new();
+            Stopwatch stopWatch = new();
             stopWatch.Start();
 
             _logger.LogInformation(
@@ -80,7 +80,7 @@ namespace VideoManager.Services
             try
             {
                 string arguments = $"-loglevel error -i {video.GetOriginalFilePath()} -c:v libx264 -filter_complex \"scale = iw * min(1\\, min(1920 / iw\\, 1280 / ih)):-2\" -b:v 2M -maxrate 2M -bufsize 1M -c:a copy -preset medium -crf 26 -y -threads 1 {encodedFilePath}";
-                (string standardOutput, string standardError) = await RunCommandAsync(arguments);
+                (string? standardOutput, string? standardError) = await RunCommandAsync(arguments);
 
                 if (string.IsNullOrEmpty(standardError)) encodeResult.Success = true;
                 else _logger.LogError("Error in ffmpeg process {ErrorMessage}", standardError);
@@ -111,7 +111,7 @@ namespace VideoManager.Services
             if (File.Exists(path))
             {
                 string command = $"-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration \"{path}\"";
-                (string standardOutput, string standardError) = await RunCommandAsync(command, "ffprobe.exe");
+                (string? standardOutput, string? standardError) = await RunCommandAsync(command, "ffprobe.exe");
 
                 if (string.IsNullOrEmpty(standardError) && double.TryParse(standardOutput, out double parsedValue)) return (int)parsedValue;
             }
@@ -119,16 +119,17 @@ namespace VideoManager.Services
             return null;
         }
 
-        public async Task<string> CreateThumbnail(Video video)
+        public async Task<string?> CreateThumbnail(Video video)
         {
             string encodedFilePath = video.GetEncodedFilePath();
+            string? encodedFileDirectory = Path.GetDirectoryName(encodedFilePath);
 
-            if (File.Exists(encodedFilePath))
+            if (File.Exists(encodedFilePath) && !string.IsNullOrEmpty(encodedFileDirectory))
             {
-                string outputThumbnailPath = Path.Combine(Path.GetDirectoryName(encodedFilePath), video.VideoId + ".jpg");
+                string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + ".jpg");
                 string command = $"-loglevel error -i {encodedFilePath} -vf \"thumbnail,scale = 320:-2\" -frames:v 1 {outputThumbnailPath}";
 
-                (string _, string standardError) = await RunCommandAsync(command);
+                (string? _, string? standardError) = await RunCommandAsync(command);
 
                 if (string.IsNullOrEmpty(standardError)) return outputThumbnailPath;
             }

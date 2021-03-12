@@ -39,7 +39,7 @@ namespace VideoManager.Controllers
         [Route("{videoId:int}")]
         public async Task<IActionResult> Delete(int videoId)
         {
-            Video video = await _videoService.Get(videoId);
+            Video? video = await _videoService.Get(videoId);
 
             if (video == null) return NotFound();
 
@@ -50,9 +50,9 @@ namespace VideoManager.Controllers
         [Route("{videoId:int}/Stream")]
         public async Task<IActionResult> GetStream(int videoId)
         {
-            Video video = await _videoService.Get(videoId);
+            Video? video = await _videoService.Get(videoId);
 
-            if (video == null) return NoContent();
+            if (video == null) return NotFound();
 
             string videoPath = Path.Join(Directory.GetCurrentDirectory(), video?.GetEncodedFilePath());
 
@@ -63,9 +63,9 @@ namespace VideoManager.Controllers
         [Route("{videoId:int}/Thumbnail")]
         public async Task<IActionResult> GetThumbnail(int videoId)
         {
-            Video video = await _videoService.Get(videoId);
+            Video? video = await _videoService.Get(videoId);
 
-            if (video == null) return NoContent();
+            if (video == null) return NotFound();
 
             string thumbnailPath = Path.Join(Directory.GetCurrentDirectory(), video?.ThumbnailFilePath);
 
@@ -74,9 +74,13 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{videoId:int}")]
-        public async Task<Video> Get(int videoId)
+        public async Task<IActionResult> Get(int videoId)
         {
-            return await _videoService.Get(videoId);
+            Video? video = await _videoService.Get(videoId);
+
+            if (video == null) return NotFound();
+
+            return Ok(video);
         }
 
         [HttpPost]
@@ -85,8 +89,8 @@ namespace VideoManager.Controllers
         {
             if (files == null) return BadRequest();
 
-            Dictionary<string, IEnumerable<string>> failedFiles = new Dictionary<string, IEnumerable<string>>();
-            VideoValidator videoValidator = new VideoValidator();
+            Dictionary<string, IEnumerable<string>> failedFiles = new();
+            VideoValidator videoValidator = new();
 
             foreach (IFormFile file in files)
             {
@@ -107,7 +111,7 @@ namespace VideoManager.Controllers
         {
             if (file == null) return BadRequest();
 
-            VideoValidator videoValidator = new VideoValidator();
+            VideoValidator videoValidator = new();
             ValidationResult validationResult = videoValidator.Validate(file);
 
             if (!validationResult.IsValid) return new BadRequestObjectResult(validationResult.Errors.Select(x => x.ErrorMessage));

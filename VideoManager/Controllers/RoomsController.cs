@@ -44,8 +44,11 @@ namespace VideoManager.Controllers
         [Route("{roomId:int}/AddVideo")]
         public async Task<IActionResult> AddVideo(int roomId, int videoId)
         {
-            Room room = await _roomService.CanEdit(roomId);
-            if (room == null) return Unauthorized();
+            bool canEdit = await _roomService.CanEdit(roomId);
+            if (!canEdit) return Unauthorized();
+            Room? room = await _roomService.Get(roomId);
+            if (room == null) return NotFound();
+
             return Ok(await _roomService.AddVideo(room, videoId));
         }
 
@@ -53,8 +56,11 @@ namespace VideoManager.Controllers
         [Route("{roomId:int}/AddMember")]
         public async Task<IActionResult> AddMember(int roomId, string memberEmail)
         {
-            Room room = await _roomService.CanEdit(roomId);
-            if (room == null) return Unauthorized();
+            bool canEdit = await _roomService.CanEdit(roomId);
+            if (!canEdit) return Unauthorized();
+            Room? room = await _roomService.Get(roomId);
+            if (room == null) return NotFound();
+
             return Ok(await _roomService.AddMember(room, memberEmail));
         }
 
@@ -69,8 +75,7 @@ namespace VideoManager.Controllers
         [Route("{roomId:int}/CanEdit")]
         public async Task<IActionResult> CanEdit(int roomId)
         {
-            Room room = await _roomService.CanEdit(roomId);
-            return Ok(room != null);
+            return Ok(await _roomService.CanEdit(roomId));
         }
 
         [HttpPost]

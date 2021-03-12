@@ -21,9 +21,12 @@ namespace VideoManager.Services
 
         public async Task ReceiveSyncMessage(int roomId, string authToken, VideoSyncMessage videoSyncMessage)
         {
-            Room room = await _roomService.Get(roomId);
-            AuthUser authUser = await _authService.GetUser(authToken);
-            User user = await _userService.CreateOrGetByAuthUser(authUser);
+            Room? room = await _roomService.Get(roomId);
+            AuthUser? authUser = await _authService.GetUser(authToken);
+
+            if (authUser == null) return;
+
+            User? user = await _userService.CreateOrGetByAuthUser(authUser);
 
             if (room != null && user != null && room.CreatedByUserId == user.UserId)
             {

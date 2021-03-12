@@ -15,21 +15,17 @@ namespace VideoManager.Models
         [Key]
         public int VideoId { get; set; }
 
-        [Required]
         public string OriginalFileName { get; set; }
 
-        [Required]
         public VideoStatus Status { get; set; }
 
-        [Required]
         public string OriginalType { get; set; }
 
         public string EncodedType { get; set; } = ".mp4";
 
-        [Required]
         public long OriginalLength { get; set; }
 
-        public string ThumbnailFilePath { get; set; }
+        public string? ThumbnailFilePath { get; set; }
 
         public int? DurationInSeconds { get; set; }
 
@@ -38,7 +34,7 @@ namespace VideoManager.Models
         public TimeSpan? EncodeTime { get; set; }
 
         [JsonIgnore]
-        public ICollection<RoomVideo> PlaylistVideos { get; set; }
+        public ICollection<RoomVideo>? PlaylistVideos { get; set; }
     }
 
     public enum VideoStatus
@@ -49,6 +45,7 @@ namespace VideoManager.Models
         Encoding,
         Ready,
         Cancelled,
-        Failed
+        Failed,
+        Deleted,
     }
 }

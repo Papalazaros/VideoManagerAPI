@@ -6,7 +6,7 @@ namespace VideoManager.Validators
 {
     public class VideoValidator : AbstractValidator<IFormFile>
     {
-        private readonly HashSet<string> _acceptedFileFormats = new HashSet<string>
+        private readonly HashSet<string> _acceptedFileFormats = new()
         {
             "video/mp4",
             "video/webm"
