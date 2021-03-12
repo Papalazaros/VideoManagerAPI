@@ -62,12 +62,13 @@ namespace VideoManager
 
             services.AddSignalR().AddJsonProtocol(opts => opts.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-            services.AddCors(o => o.AddPolicy("CorsPolicy", builder => {
+            services.AddCors(o => o.AddPolicy("CorsPolicy", builder =>
+            {
                 builder
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials()
-                    .WithOrigins("http://localhost:8080", "http://localhost");
+                    .WithOrigins("http://localhost:8080");
             }));
 
             services.Configure<FormOptions>(options =>
@@ -98,8 +99,6 @@ namespace VideoManager
             app.UseCors("CorsPolicy");
 
             app.UseResponseCompression();
-
-            //app.UseHttpsRedirection();
 
             app.UseWhen(context => !context.Request.Path.StartsWithSegments("/videoHub"),
                 app => app.UseMiddleware(typeof(AuthenticationMiddleware)));

@@ -28,24 +28,22 @@ namespace VideoManager.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet]
-        [Route("Random")]
-        public async Task<IEnumerable<GetVideoDto>> GetRandom(int count, int? roomId, VideoStatus? videoStatus = VideoStatus.Ready)
-        {
-            return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetRandom(_userId, roomId, videoStatus, count));
-        }
 
         [HttpGet]
-        public async Task<IEnumerable<GetVideoDto>> GetAll(int? roomId, VideoStatus? videoStatus)
+        public async Task<IEnumerable<Video>> GetAll(int? roomId, VideoStatus? videoStatus)
         {
-            return _mapper.Map<List<Video>, List<GetVideoDto>>(await _videoService.GetAll(_userId, roomId, videoStatus));
+            return await _videoService.GetAll(_userId, roomId, videoStatus);
         }
 
         [HttpDelete]
         [Route("{videoId:int}")]
-        public async Task<Video> Delete(int videoId)
+        public async Task<IActionResult> Delete(int videoId)
         {
-            return await _videoService.Delete(_userId, videoId);
+            Video video = await _videoService.Get(videoId);
+
+            if (video == null) return NotFound();
+
+            return Ok(await _videoService.Delete(_userId, videoId));
         }
 
         [HttpGet]

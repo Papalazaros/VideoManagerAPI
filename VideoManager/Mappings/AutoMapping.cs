@@ -8,13 +8,6 @@ namespace VideoManager
     {
         public AutoMapping()
         {
-            CreateMap<Video, GetVideoDto>()
-                .ForMember(dest => dest.VideoId, opt => opt.MapFrom(src => src.VideoId))
-                .ForMember(dest => dest.DurationInSeconds, opt => opt.MapFrom(src => src.DurationInSeconds))
-                .ForMember(dest => dest.Length, opt => opt.MapFrom(src => src.EncodedLength))
-                .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => src.CreatedDate))
-                .ForMember(dest => dest.OriginalFileName, opt => opt.MapFrom(src => src.OriginalFileName));
-
             CreateMap<Video, PostVideoDto>()
                 .ForMember(dest => dest.VideoId, opt => opt.MapFrom(src => src.VideoId))
                 .ForMember(dest => dest.OriginalFileName, opt => opt.MapFrom(src => src.OriginalFileName))

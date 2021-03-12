@@ -66,7 +66,7 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        [Route("{roomId:int}/CanView")]
+        [Route("{roomId:int}/CanEdit")]
         public async Task<IActionResult> CanEdit(int roomId)
         {
             Room room = await _roomService.CanEdit(roomId);

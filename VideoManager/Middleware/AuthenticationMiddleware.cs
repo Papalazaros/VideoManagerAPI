@@ -47,7 +47,7 @@ namespace VideoManager.Middleware
             {
                 accessToken = parameter;
             }
-            else if(context.Request.Query.TryGetValue("accessToken", out StringValues accessTokenValues) && accessTokenValues.Count > 0)
+            else if (context.Request.Query.TryGetValue("accessToken", out StringValues accessTokenValues) && accessTokenValues.Count > 0)
             {
                 accessToken = accessTokenValues[0];
             }
