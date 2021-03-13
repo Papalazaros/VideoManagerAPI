@@ -13,7 +13,7 @@ namespace VideoManager.Services
     public interface IUserVideoService
     {
         Task<List<Video>> GetAll(int? userId, int? roomId, VideoStatus? videoStatus);
-        Task<Video?> Get(int videoId);
+        Task<Video> Get(int videoId);
         Task<Video> Create(IFormFile formFile);
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
         Task<Video?> Delete(int? userId, int videoId);
@@ -32,9 +32,9 @@ namespace VideoManager.Services
             _fileService = fileService;
         }
 
-        public async Task<Video?> Get(int videoId)
+        public async Task<Video> Get(int videoId)
         {
-            Video? video = await _videoManagerDbContext.Videos.FindAsync(videoId)!;
+            Video video = await _videoManagerDbContext.Videos.FindAsync(videoId);
             if (video == null) throw new NotFoundException();
             return video;
         }

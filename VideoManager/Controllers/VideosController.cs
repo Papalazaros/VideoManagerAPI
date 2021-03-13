@@ -51,7 +51,7 @@ namespace VideoManager.Controllers
         [Route("{videoId:int}/Stream")]
         public async Task<IActionResult> GetStream(int videoId)
         {
-            Video? video = await _videoService.Get(videoId);
+            Video video = await _videoService.Get(videoId);
 
             string videoPath = Path.Join(Directory.GetCurrentDirectory(), video?.GetEncodedFilePath());
 
@@ -64,7 +64,7 @@ namespace VideoManager.Controllers
         [Route("{videoId:int}/Thumbnail")]
         public async Task<IActionResult> GetThumbnail(int videoId)
         {
-            Video? video = await _videoService.Get(videoId);
+            Video video = await _videoService.Get(videoId);
 
             if (string.IsNullOrEmpty(video?.ThumbnailFilePath)) return NotFound();
 
@@ -77,7 +77,7 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{videoId:int}")]
-        public async Task<Video?> Get(int videoId)
+        public async Task<Video> Get(int videoId)
         {
             return await _videoService.Get(videoId);
         }
