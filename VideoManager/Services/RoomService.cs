@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using VideoManager.Exceptions;
 using VideoManager.Models;
 using VideoManager.Models.Database;
 
@@ -10,14 +12,14 @@ namespace VideoManager.Services
 {
     public interface IRoomService
     {
-        Task<Room?> Get(int roomId);
+        Task<Room> Get(int roomId);
         Task<List<Room>> GetAll();
         Task<List<Room>> GetMemberships();
         Task<Room> Create(string name);
-        Task<RoomVideo> AddVideo(Room room, int videoId);
-        Task<RoomMember?> AddMember(Room room, string memberEmail);
-        Task<bool> CanView(int roomId);
-        Task<bool> CanEdit(int roomId);
+        Task<RoomVideo> AddVideo(int roomId, int videoId);
+        Task<RoomMember?> AddMember(int roomId, string memberEmail);
+        Task<(bool canView, Room room)> CanView(int roomId);
+        Task<(bool canEdit, Room room)> CanEdit(int roomId);
         Task<Room> Delete(int roomId);
     }
 
@@ -35,9 +37,11 @@ namespace VideoManager.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public Task<Room?> Get(int roomId)
+        public async Task<Room> Get(int roomId)
         {
-            return _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId)!;
+            (bool canView, Room room) = await CanView(roomId);
+            if (!canView) throw new UnauthorizedAccessException();
+            return room;
         }
 
         public Task<List<Room>> GetAll()
@@ -64,8 +68,10 @@ namespace VideoManager.Services
             return room;
         }
 
-        public async Task<RoomMember?> AddMember(Room room, string memberEmail)
+        public async Task<RoomMember?> AddMember(int roomId, string memberEmail)
         {
+            (bool canEdit, Room room) = await CanEdit(roomId);
+            if (!canEdit) throw new UnauthorizedAccessException();
             RoomMember? roomMember = null;
             User? user = await _videoManagerDbContext.Users.FirstOrDefaultAsync(x => x.Email == memberEmail.ToLower());
 
@@ -85,21 +91,26 @@ namespace VideoManager.Services
             return roomMember;
         }
 
-        public async Task<bool> CanView(int roomId)
+        public async Task<(bool canView, Room room)> CanView(int roomId)
         {
-            Room? room = await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId);
+            Room? room = await _videoManagerDbContext.Rooms.FindAsync(roomId)!;
+            if (room == null) throw new NotFoundException();
             RoomMember? roomMember = await _videoManagerDbContext.RoomMembers.FirstOrDefaultAsync(x => x.UserId == _userId && x.RoomId == roomId);
 
-            return roomMember != null || room != null;
+            return (roomMember != null || room.CreatedByUserId == _userId, room);
         }
 
-        public async Task<bool> CanEdit(int roomId)
+        public async Task<(bool canEdit, Room room)> CanEdit(int roomId)
         {
-            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId) != null;
+            Room? room = await _videoManagerDbContext.Rooms.FindAsync(roomId)!;
+            if (room == null) throw new NotFoundException();
+            return (room.CreatedByUserId == _userId, room);
         }
 
-        public async Task<RoomVideo> AddVideo(Room room, int videoId)
+        public async Task<RoomVideo> AddVideo(int roomId, int videoId)
         {
+            (bool canEdit, Room room) = await CanEdit(roomId);
+            if (!canEdit) throw new UnauthorizedAccessException();
             RoomVideo roomVideo = new(room.RoomId, videoId);
             await _videoManagerDbContext.RoomVideos.AddAsync(roomVideo);
             await _videoManagerDbContext.SaveChangesAsync();
@@ -109,7 +120,8 @@ namespace VideoManager.Services
 
         public async Task<Room> Delete(int roomId)
         {
-            Room? room = await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId);
+            (bool canEdit, Room room) = await CanEdit(roomId);
+            if (!canEdit) throw new UnauthorizedAccessException();
             room.RoomStatus = RoomStatus.Inactive;
             await _videoManagerDbContext.SaveChangesAsync();
             return room;

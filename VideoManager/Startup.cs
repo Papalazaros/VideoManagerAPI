@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using VideoManager.Middleware;
@@ -39,7 +40,10 @@ namespace VideoManager
 
             services.AddMemoryCache();
 
-            services.AddHttpClient<IAuthService, AuthService>();
+            services.AddHttpClient<IAuthService, AuthService>(httpClient =>
+            {
+                httpClient.DefaultRequestVersion = new Version(2, 0);
+            });
 
             services.AddScoped<IUserService, UserService>();
 
@@ -101,6 +105,8 @@ namespace VideoManager
 
             app.UseWhen(context => !context.Request.Path.StartsWithSegments("/videoHub"),
                 app => app.UseMiddleware(typeof(AuthenticationMiddleware)));
+
+            app.UseMiddleware(typeof(ExceptionHandlingMiddleware));
 
             app.UseRouting();
 

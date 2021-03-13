@@ -39,10 +39,6 @@ namespace VideoManager.Controllers
         [Route("{videoId:int}")]
         public async Task<IActionResult> Delete(int videoId)
         {
-            Video? video = await _videoService.Get(videoId);
-
-            if (video == null) return NotFound();
-
             return Ok(await _videoService.Delete(_userId, videoId));
         }
 
@@ -51,8 +47,6 @@ namespace VideoManager.Controllers
         public async Task<IActionResult> GetStream(int videoId)
         {
             Video? video = await _videoService.Get(videoId);
-
-            if (video == null) return NotFound();
 
             string videoPath = Path.Join(Directory.GetCurrentDirectory(), video?.GetEncodedFilePath());
 
@@ -67,7 +61,7 @@ namespace VideoManager.Controllers
         {
             Video? video = await _videoService.Get(videoId);
 
-            if (video == null || string.IsNullOrEmpty(video.ThumbnailFilePath)) return NotFound();
+            if (string.IsNullOrEmpty(video?.ThumbnailFilePath)) return NotFound();
 
             string thumbnailPath = Path.Join(Directory.GetCurrentDirectory(), video.ThumbnailFilePath);
 
@@ -80,11 +74,7 @@ namespace VideoManager.Controllers
         [Route("{videoId:int}")]
         public async Task<IActionResult> Get(int videoId)
         {
-            Video? video = await _videoService.Get(videoId);
-
-            if (video == null) return NotFound();
-
-            return Ok(video);
+            return Ok(await _videoService.Get(videoId));
         }
 
         [HttpPost]

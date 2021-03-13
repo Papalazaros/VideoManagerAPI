@@ -40,73 +40,34 @@ namespace VideoManager.Controllers
         [Route("{roomId:int}/AddVideo")]
         public async Task<IActionResult> AddVideo(int roomId, int videoId)
         {
-            Room? room = await _roomService.Get(roomId);
-
-            if (room == null) return NotFound();
-
-            bool canEdit = await _roomService.CanEdit(roomId);
-
-            if (!canEdit) return Unauthorized();
-
-            return Ok(await _roomService.AddVideo(room, videoId));
+            return Ok(await _roomService.AddVideo(roomId, videoId));
         }
 
         [HttpGet]
         [Route("{roomId:int}/AddMember")]
         public async Task<IActionResult> AddMember(int roomId, string memberEmail)
         {
-            Room? room = await _roomService.Get(roomId);
-
-            if (room == null) return NotFound();
-
-            bool canEdit = await _roomService.CanEdit(roomId);
-
-            if (!canEdit) return Unauthorized();
-
-            return Ok(await _roomService.AddMember(room, memberEmail));
+            return Ok(await _roomService.AddMember(roomId, memberEmail));
         }
 
         [HttpGet]
         [Route("{roomId:int}/CanView")]
         public async Task<IActionResult> CanView(int roomId)
         {
-            return Ok(await _roomService.CanView(roomId));
+            return Ok((await _roomService.CanView(roomId)).canView);
         }
 
         [HttpGet]
         [Route("{roomId:int}/CanEdit")]
         public async Task<IActionResult> CanEdit(int roomId)
         {
-            return Ok(await _roomService.CanEdit(roomId));
-        }
-
-        [HttpPost]
-        [Route("{roomId:int}")]
-        public async Task<IActionResult> Post(int roomId)
-        {
-            Room? room = await _roomService.Get(roomId);
-
-            if (room == null) return NotFound();
-
-            bool canEdit = await _roomService.CanEdit(roomId);
-
-            if (!canEdit) return Unauthorized();
-
-            return Ok();
+            return Ok((await _roomService.CanEdit(roomId)).canEdit);
         }
 
         [HttpDelete]
         [Route("{roomId:int}")]
         public async Task<IActionResult> Delete(int roomId)
         {
-            Room? room = await _roomService.Get(roomId);
-
-            if (room == null) return NotFound();
-
-            bool canEdit = await _roomService.CanEdit(roomId);
-
-            if (!canEdit) return Unauthorized();
-
             return Ok(await _roomService.Delete(roomId));
         }
 
