@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using System.Threading.Tasks;
 using VideoManager.Models;
 
@@ -21,11 +22,11 @@ namespace VideoManager.Services
 
         public async Task ReceiveSyncMessage(int roomId, string authToken, VideoSyncMessage videoSyncMessage)
         {
-            Room? room = await _roomService.Get(roomId);
             AuthUser? authUser = await _authService.GetUser(authToken);
 
             if (authUser == null) return;
 
+            Room? room = await _roomService.Get(roomId);
             User? user = await _userService.CreateOrGetByAuthUser(authUser);
 
             if (room != null && user != null && room.CreatedByUserId == user.UserId)

@@ -37,9 +37,12 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{roomId:int}")]
-        public async Task<Room> Get(int roomId)
+        public async Task<IActionResult> Get(int roomId)
         {
-            return await _roomService.Get(roomId);
+            (bool canView, Room room) = await _roomService.CanView(roomId);
+            if (room == null) return NotFound();
+            if (!canView) return Unauthorized();
+            return Ok(room);
         }
 
         [HttpGet]

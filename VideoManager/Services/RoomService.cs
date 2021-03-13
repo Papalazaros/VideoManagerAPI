@@ -39,8 +39,8 @@ namespace VideoManager.Services
 
         public async Task<Room> Get(int roomId)
         {
-            (bool canView, Room room) = await CanView(roomId);
-            if (!canView) throw new UnauthorizedAccessException();
+            Room room = await _videoManagerDbContext.Rooms.FindAsync(roomId);
+            if (room == null || room.RoomStatus == RoomStatus.Inactive) throw new NotFoundException();
             return room;
         }
 
