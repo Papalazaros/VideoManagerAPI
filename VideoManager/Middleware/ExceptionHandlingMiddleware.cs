@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using VideoManager.Exceptions;
 
@@ -21,13 +19,16 @@ namespace VideoManager.Middleware
             try
             {
                 await _next(context);
-            } catch (NotFoundException)
+            }
+            catch (NotFoundException)
             {
                 context.Response.StatusCode = 404;
-            } catch (UnauthorizedAccessException)
+            }
+            catch (UnauthorizedAccessException)
             {
                 context.Response.StatusCode = 401;
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 context.Response.StatusCode = 500;
             }

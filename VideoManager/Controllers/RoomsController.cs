@@ -1,10 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using VideoManager.Models;
 using VideoManager.Services;
 
 namespace VideoManager.Controllers
 {
+    [Produces("application/json")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
     [ApiController]
     [Route("[controller]")]
     public class RoomsController : ControllerBase
@@ -17,64 +23,64 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<List<Room>> Get()
         {
-            return Ok(await _roomService.GetAll());
+            return await _roomService.GetAll();
         }
 
         [HttpGet]
         [Route("Memberships")]
-        public async Task<IActionResult> GetMemberships()
+        public async Task<List<Room>> GetMemberships()
         {
-            return Ok(await _roomService.GetMemberships());
+            return await _roomService.GetMemberships();
         }
 
         [HttpGet]
         [Route("{roomId:int}")]
-        public async Task<IActionResult> Get(int roomId)
+        public async Task<Room> Get(int roomId)
         {
-            return Ok(await _roomService.Get(roomId));
+            return await _roomService.Get(roomId);
         }
 
         [HttpGet]
         [Route("{roomId:int}/AddVideo")]
-        public async Task<IActionResult> AddVideo(int roomId, int videoId)
+        public async Task<RoomVideo> AddVideo(int roomId, int videoId)
         {
-            return Ok(await _roomService.AddVideo(roomId, videoId));
+            return await _roomService.AddVideo(roomId, videoId);
         }
 
         [HttpGet]
         [Route("{roomId:int}/AddMember")]
-        public async Task<IActionResult> AddMember(int roomId, string memberEmail)
+        public async Task<RoomMember?> AddMember(int roomId, string memberEmail)
         {
-            return Ok(await _roomService.AddMember(roomId, memberEmail));
+            return await _roomService.AddMember(roomId, memberEmail);
         }
 
         [HttpGet]
         [Route("{roomId:int}/CanView")]
-        public async Task<IActionResult> CanView(int roomId)
+        public async Task<bool> CanView(int roomId)
         {
-            return Ok((await _roomService.CanView(roomId)).canView);
+            return (await _roomService.CanView(roomId)).canView;
         }
 
         [HttpGet]
         [Route("{roomId:int}/CanEdit")]
-        public async Task<IActionResult> CanEdit(int roomId)
+        public async Task<bool> CanEdit(int roomId)
         {
-            return Ok((await _roomService.CanEdit(roomId)).canEdit);
+            return (await _roomService.CanEdit(roomId)).canEdit;
         }
 
         [HttpDelete]
         [Route("{roomId:int}")]
-        public async Task<IActionResult> Delete(int roomId)
+        public async Task<Room> Delete(int roomId)
         {
-            return Ok(await _roomService.Delete(roomId));
+            return await _roomService.Delete(roomId);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post(string name)
+        public async Task<Room> Post(string name)
         {
-            return Ok(await _roomService.Create(name));
+            return await _roomService.Create(name);
         }
     }
 }

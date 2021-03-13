@@ -14,6 +14,11 @@ using VideoManager.Validators;
 namespace VideoManager.Controllers
 {
     [ApiController]
+    [Produces("application/json")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
     [Route("[controller]")]
     public class VideosController : ControllerBase
     {
@@ -37,9 +42,9 @@ namespace VideoManager.Controllers
 
         [HttpDelete]
         [Route("{videoId:int}")]
-        public async Task<IActionResult> Delete(int videoId)
+        public async Task<Video?> Delete(int videoId)
         {
-            return Ok(await _videoService.Delete(_userId, videoId));
+            return await _videoService.Delete(_userId, videoId);
         }
 
         [HttpGet]
@@ -72,9 +77,9 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{videoId:int}")]
-        public async Task<IActionResult> Get(int videoId)
+        public async Task<Video?> Get(int videoId)
         {
-            return Ok(await _videoService.Get(videoId));
+            return await _videoService.Get(videoId);
         }
 
         [HttpPost]
