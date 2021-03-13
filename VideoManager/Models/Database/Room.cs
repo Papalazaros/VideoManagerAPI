@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using VideoManager.Models.Database;
 
 namespace VideoManager.Models
 {
@@ -13,6 +14,8 @@ namespace VideoManager.Models
         public bool IsPrivate { get; set; } = true;
 
         public ICollection<RoomVideo>? RoomVideos { get; set; }
+
+        public RoomStatus RoomStatus { get; set; } = RoomStatus.Active;
 
         public Room(string name)
         {

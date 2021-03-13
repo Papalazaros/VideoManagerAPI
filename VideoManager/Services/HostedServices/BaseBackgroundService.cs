@@ -45,7 +45,7 @@ namespace VideoManager.Services
                     _logger.LogInformation(
                         "No tasks found. Sleeping for {_pollingInterval} seconds.", _timeToCheckInterval.TotalSeconds);
 
-                    await Task.Delay(_timeToCheckInterval);
+                    await Task.Delay(_timeToCheckInterval, cancellationToken);
 
                     _pollingInterval = Math.Min(_maxPollingInterval, _pollingInterval * _pollingIntervalIncreaseRate);
                 }

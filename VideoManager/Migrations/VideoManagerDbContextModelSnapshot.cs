@@ -15,8 +15,8 @@ namespace VideoManager.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
+                .HasAnnotation("ProductVersion", "5.0.4")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
             modelBuilder.Entity("VideoManager.Models.Room", b =>
@@ -44,6 +44,9 @@ namespace VideoManager.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RoomStatus")
+                        .HasColumnType("int");
 
                     b.HasKey("RoomId");
 
@@ -127,6 +130,7 @@ namespace VideoManager.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("EncodedType")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("ModifiedByUserId")
@@ -170,6 +174,10 @@ namespace VideoManager.Migrations
                     b.HasOne("VideoManager.Models.User", "ModifiedByUser")
                         .WithMany()
                         .HasForeignKey("ModifiedByUserId");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("ModifiedByUser");
                 });
 
             modelBuilder.Entity("VideoManager.Models.RoomMember", b =>
@@ -185,6 +193,10 @@ namespace VideoManager.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Room");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("VideoManager.Models.RoomVideo", b =>
@@ -200,6 +212,10 @@ namespace VideoManager.Migrations
                         .HasForeignKey("VideoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Room");
+
+                    b.Navigation("Video");
                 });
 
             modelBuilder.Entity("VideoManager.Models.Video", b =>
@@ -211,6 +227,20 @@ namespace VideoManager.Migrations
                     b.HasOne("VideoManager.Models.User", "ModifiedByUser")
                         .WithMany()
                         .HasForeignKey("ModifiedByUserId");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("ModifiedByUser");
+                });
+
+            modelBuilder.Entity("VideoManager.Models.Room", b =>
+                {
+                    b.Navigation("RoomVideos");
+                });
+
+            modelBuilder.Entity("VideoManager.Models.Video", b =>
+                {
+                    b.Navigation("PlaylistVideos");
                 });
 #pragma warning restore 612, 618
         }

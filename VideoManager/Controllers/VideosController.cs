@@ -56,6 +56,8 @@ namespace VideoManager.Controllers
 
             string videoPath = Path.Join(Directory.GetCurrentDirectory(), video?.GetEncodedFilePath());
 
+            if (!System.IO.File.Exists(videoPath)) return NotFound();
+
             return PhysicalFile(videoPath, "video/mp4", true);
         }
 
@@ -65,9 +67,11 @@ namespace VideoManager.Controllers
         {
             Video? video = await _videoService.Get(videoId);
 
-            if (video == null) return NotFound();
+            if (video == null || string.IsNullOrEmpty(video.ThumbnailFilePath)) return NotFound();
 
-            string thumbnailPath = Path.Join(Directory.GetCurrentDirectory(), video?.ThumbnailFilePath);
+            string thumbnailPath = Path.Join(Directory.GetCurrentDirectory(), video.ThumbnailFilePath);
+
+            if (!System.IO.File.Exists(thumbnailPath)) return NotFound();
 
             return PhysicalFile(thumbnailPath, "image/jpeg");
         }

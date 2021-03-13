@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VideoManager.Models;
+using VideoManager.Models.Database;
 
 namespace VideoManager.Services
 {
@@ -17,6 +18,7 @@ namespace VideoManager.Services
         Task<RoomMember?> AddMember(Room room, string memberEmail);
         Task<bool> CanView(int roomId);
         Task<bool> CanEdit(int roomId);
+        Task<Room> Delete(int roomId);
     }
 
     public class RoomService : IRoomService
@@ -33,19 +35,24 @@ namespace VideoManager.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<Room?> Get(int roomId)
+        public Task<Room?> Get(int roomId)
         {
-            return await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId);
+            return _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId)!;
         }
 
-        public async Task<List<Room>> GetAll()
+        public Task<List<Room>> GetAll()
         {
-            return await _videoManagerDbContext.Rooms.Where(x => x.CreatedByUserId == _userId).ToListAsync();
+            return _videoManagerDbContext.Rooms.Where(x => x.CreatedByUserId == _userId).ToListAsync();
         }
 
-        public async Task<List<Room>> GetMemberships()
+        public Task<List<Room>> GetMemberships()
         {
-            return await _videoManagerDbContext.RoomMembers.Where(x => x.UserId == _userId).Join(_videoManagerDbContext.Rooms, x => x.RoomId, x => x.RoomId, (_, room) => room).ToListAsync();
+            return _videoManagerDbContext.RoomMembers
+                .Where(x => x.UserId == _userId)
+                .Include(x => x.Room)
+                .Where(x => x.Room!.RoomStatus == RoomStatus.Active)
+                .Join(_videoManagerDbContext.Rooms, x => x.RoomId, x => x.RoomId, (_, room) => room)
+                .ToListAsync();
         }
 
         public async Task<Room> Create(string name)
@@ -98,6 +105,14 @@ namespace VideoManager.Services
             await _videoManagerDbContext.SaveChangesAsync();
 
             return roomVideo;
+        }
+
+        public async Task<Room> Delete(int roomId)
+        {
+            Room? room = await _videoManagerDbContext.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId && x.CreatedByUserId == _userId);
+            room.RoomStatus = RoomStatus.Inactive;
+            await _videoManagerDbContext.SaveChangesAsync();
+            return room;
         }
     }
 }

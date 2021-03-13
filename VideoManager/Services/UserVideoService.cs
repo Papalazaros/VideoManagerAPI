@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -22,30 +21,27 @@ namespace VideoManager.Services
 
     public class UserVideoService : IUserVideoService
     {
-        private readonly ILogger<UserVideoService> _logger;
         private readonly VideoManagerDbContext _videoManagerDbContext;
         private readonly IFileService _fileService;
 
-        public UserVideoService(ILogger<UserVideoService> logger,
-            VideoManagerDbContext videoManagerDbContext,
+        public UserVideoService(VideoManagerDbContext videoManagerDbContext,
             IFileService fileService)
         {
-            _logger = logger;
             _videoManagerDbContext = videoManagerDbContext;
             _fileService = fileService;
         }
 
-        public async Task<Video?> Get(int videoId)
+        public Task<Video?> Get(int videoId)
         {
-            return await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.VideoId == videoId);
+            return _videoManagerDbContext.Videos
+                .FirstOrDefaultAsync(x => x.VideoId == videoId)!;
         }
 
-        public async Task<List<Video>> GetAll(int? userId, int? roomId, VideoStatus? videoStatus)
+        public Task<List<Video>> GetAll(int? userId, int? roomId, VideoStatus? videoStatus)
         {
             if (roomId.HasValue)
             {
-                return await _videoManagerDbContext.RoomVideos
+                return _videoManagerDbContext.RoomVideos
                     .AsNoTracking()
                     .Include(x => x.Video)
                     .Where(x => x.RoomId == roomId && x.Video != null && (!videoStatus.HasValue || x.Video.Status == videoStatus))
@@ -54,7 +50,7 @@ namespace VideoManager.Services
             }
             else
             {
-                return await _videoManagerDbContext.Videos
+                return _videoManagerDbContext.Videos
                     .AsNoTracking()
                     .Where(x => (!userId.HasValue || x.CreatedByUserId == userId) && (!videoStatus.HasValue || x.Status == videoStatus))
                     .ToListAsync();
@@ -63,8 +59,6 @@ namespace VideoManager.Services
 
         public async Task<Video?> Delete(int? userId, int videoId)
         {
-            if (!userId.HasValue) return null;
-
             Video video = await _videoManagerDbContext.Videos
                 .FirstOrDefaultAsync(x => x.VideoId == videoId && x.CreatedByUserId == userId);
 
@@ -77,12 +71,10 @@ namespace VideoManager.Services
             return video;
         }
 
-        public async Task<Video?> FindByOriginalVideoName(int? userId, string originalVideoName)
+        public Task<Video?> FindByOriginalVideoName(int? userId, string originalVideoName)
         {
-            if (!userId.HasValue) return null;
-
-            return await _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && x.CreatedByUserId == userId);
+            return _videoManagerDbContext.Videos
+                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && x.CreatedByUserId == userId)!;
         }
 
         public async Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles)

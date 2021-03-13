@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,16 +19,13 @@ namespace VideoManager.Services
 
     public class VideoManagerService : IVideoManagerService
     {
-        private readonly ILogger<VideoManagerService> _logger;
         private readonly VideoManagerDbContext _videoManagerDbContext;
         private readonly IEncoder _encoderService;
         private static readonly DateTime _encodingCooldown = DateTime.UtcNow.AddMinutes(-30);
 
-        public VideoManagerService(ILogger<VideoManagerService> logger,
-            VideoManagerDbContext videoManagerDbContext,
+        public VideoManagerService(VideoManagerDbContext videoManagerDbContext,
             IEncoder encodingService)
         {
-            _logger = logger;
             _videoManagerDbContext = videoManagerDbContext;
             _encoderService = encodingService;
         }
@@ -102,9 +98,9 @@ namespace VideoManager.Services
             return await DeleteMany(videoIdsToRemove);
         }
 
-        public async Task<List<Video>> GetVideosToEncode(int count)
+        public Task<List<Video>> GetVideosToEncode(int count)
         {
-            return await _videoManagerDbContext.Videos
+            return _videoManagerDbContext.Videos
                 .AsNoTracking()
                 .Where(x => x.Status == VideoStatus.Uploaded
                     || (x.Status == VideoStatus.Encoding && x.CreatedDate < _encodingCooldown))

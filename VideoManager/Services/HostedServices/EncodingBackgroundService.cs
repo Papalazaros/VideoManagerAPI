@@ -8,7 +8,7 @@ namespace VideoManager.Services
 {
     public class EncodingBackgroundService : BackgroundTaskService
     {
-        private const int _maxConcurrentTasks = 4;
+        private const int _maxConcurrentTasks = 5;
 
         public EncodingBackgroundService(ILogger<EncodingBackgroundService> logger, IServiceScopeFactory scopeFactory) : base(logger, scopeFactory) { }
 

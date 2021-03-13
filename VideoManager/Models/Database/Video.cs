@@ -15,11 +15,11 @@ namespace VideoManager.Models
         [Key]
         public int VideoId { get; set; }
 
-        public string OriginalFileName { get; set; }
+        public string OriginalFileName { get; set; } = null!;
 
         public VideoStatus Status { get; set; }
 
-        public string OriginalType { get; set; }
+        public string OriginalType { get; set; } = null!;
 
         public string EncodedType { get; set; } = ".mp4";
 

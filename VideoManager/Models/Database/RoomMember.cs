@@ -1,12 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace VideoManager.Models
+﻿namespace VideoManager.Models
 {
     public class RoomMember
     {
-        [Key]
-        public int RoomMemberId { get; set; }
-
         public int RoomId { get; set; }
 
         public Room? Room { get; set; }

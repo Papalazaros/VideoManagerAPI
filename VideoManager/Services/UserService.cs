@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using VideoManager.Models;
 
@@ -13,15 +12,12 @@ namespace VideoManager.Services
 
     public class UserService : IUserService
     {
-        private readonly ILogger<UserService> _logger;
         private readonly VideoManagerDbContext _videoManagerDbContext;
         private readonly IMemoryCache _memoryCache;
 
-        public UserService(ILogger<UserService> logger,
-            VideoManagerDbContext videoManagerDbContext,
+        public UserService(VideoManagerDbContext videoManagerDbContext,
             IMemoryCache memoryCache)
         {
-            _logger = logger;
             _videoManagerDbContext = videoManagerDbContext;
             _memoryCache = memoryCache;
         }
