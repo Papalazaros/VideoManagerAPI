@@ -35,7 +35,7 @@ namespace VideoManager.Services
         public async Task<Video> Get(int videoId)
         {
             Video video = await _videoManagerDbContext.Videos.FindAsync(videoId);
-            if (video == null) throw new NotFoundException();
+            if (video == null || video.Status == VideoStatus.Deleted) throw new NotFoundException();
             return video;
         }
 
@@ -61,9 +61,8 @@ namespace VideoManager.Services
 
         public async Task<Video?> Delete(int? userId, int videoId)
         {
-            Video video = await _videoManagerDbContext.Videos.FindAsync(videoId);
+            Video video = await Get(videoId);
 
-            if (video == null || video.Status == VideoStatus.Deleted) throw new NotFoundException();
             if (video.CreatedByUserId != userId) throw new UnauthorizedAccessException();
 
             video.Status = VideoStatus.Deleted;

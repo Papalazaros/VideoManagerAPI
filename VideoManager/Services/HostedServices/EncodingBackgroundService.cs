@@ -23,7 +23,7 @@ namespace VideoManager.Services
 
             if (videos.Count == 0) return false;
 
-            VideoManagerDbContext videoManagerDbContext = scope.ServiceProvider.GetRequiredService<VideoManagerDbContext>();
+            using VideoManagerDbContext videoManagerDbContext = scope.ServiceProvider.GetRequiredService<VideoManagerDbContext>();
             IEncoder encodingService = scope.ServiceProvider.GetRequiredService<IEncoder>();
             List<Task<EncodeResult>> encodingTasks = new(videos.Count);
 

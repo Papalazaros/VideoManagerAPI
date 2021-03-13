@@ -40,10 +40,7 @@ namespace VideoManager
 
             services.AddMemoryCache();
 
-            services.AddHttpClient<IAuthService, AuthService>(httpClient =>
-            {
-                httpClient.DefaultRequestVersion = new Version(2, 0);
-            });
+            services.AddHttpClient<IAuthService, AuthService>();
 
             services.AddScoped<IUserService, UserService>();
 

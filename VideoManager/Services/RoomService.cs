@@ -46,7 +46,7 @@ namespace VideoManager.Services
 
         public Task<List<Room>> GetAll()
         {
-            return _videoManagerDbContext.Rooms.Where(x => x.CreatedByUserId == _userId).ToListAsync();
+            return _videoManagerDbContext.Rooms.Where(x => x.CreatedByUserId == _userId && x.RoomStatus == RoomStatus.Active).ToListAsync();
         }
 
         public Task<List<Room>> GetMemberships()
@@ -62,7 +62,6 @@ namespace VideoManager.Services
         public async Task<Room> Create(string name)
         {
             Room room = new(name);
-
             await _videoManagerDbContext.Rooms.AddAsync(room);
             await _videoManagerDbContext.SaveChangesAsync();
             return room;
@@ -93,17 +92,17 @@ namespace VideoManager.Services
 
         public async Task<(bool canView, Room room)> CanView(int roomId)
         {
-            Room? room = await _videoManagerDbContext.Rooms.FindAsync(roomId)!;
-            if (room == null) throw new NotFoundException();
+            Room? room = await _videoManagerDbContext.Rooms.FindAsync(roomId);
+            if (room == null || room.RoomStatus == RoomStatus.Inactive) throw new NotFoundException();
             RoomMember? roomMember = await _videoManagerDbContext.RoomMembers.FirstOrDefaultAsync(x => x.UserId == _userId && x.RoomId == roomId);
 
-            return (roomMember != null || room.CreatedByUserId == _userId, room);
+            return (roomMember != null || room.CreatedByUserId == _userId || !room.IsPrivate, room);
         }
 
         public async Task<(bool canEdit, Room room)> CanEdit(int roomId)
         {
-            Room? room = await _videoManagerDbContext.Rooms.FindAsync(roomId)!;
-            if (room == null) throw new NotFoundException();
+            Room? room = await _videoManagerDbContext.Rooms.FindAsync(roomId);
+            if (room == null || room.RoomStatus == RoomStatus.Inactive) throw new NotFoundException();
             return (room.CreatedByUserId == _userId, room);
         }
 
