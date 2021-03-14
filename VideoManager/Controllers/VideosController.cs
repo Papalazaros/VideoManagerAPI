@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using VideoManager.Models;
-using VideoManager.Models.Dto;
 using VideoManager.Services;
 using VideoManager.Validators;
 
@@ -83,10 +82,10 @@ namespace VideoManager.Controllers
         }
 
         [HttpPost]
-        [Route("CreateMany")]
         public async Task<IActionResult> Post(IEnumerable<IFormFile> files)
         {
             if (files == null) return BadRequest();
+            long remainingSpace = await _videoService.GetRemainingSpace(_userId);
 
             Dictionary<string, IEnumerable<string>> failedFiles = new();
             VideoValidator videoValidator = new();
@@ -96,27 +95,15 @@ namespace VideoManager.Controllers
                 ValidationResult validationResult = videoValidator.Validate(file);
 
                 if (!validationResult.IsValid) failedFiles[file.FileName] = validationResult.Errors.Select(x => x.ErrorMessage);
+                else if (remainingSpace - file.Length <= 0) failedFiles[file.FileName] = new List<string> { "No space remaining." };
                 else if (await _videoService.FindByOriginalVideoName(_userId, file.FileName) != null) failedFiles[file.FileName] = new List<string> { "Duplicate file." };
+                else remainingSpace -= file.Length;
             }
 
             IEnumerable<IFormFile> validVideos = files.Where(x => !failedFiles.ContainsKey(x.FileName));
             List<Video> createdVideos = await _videoService.CreateMany(validVideos);
 
             return Ok(new { failed = failedFiles, created = createdVideos });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Post(IFormFile file)
-        {
-            if (file == null) return BadRequest();
-
-            VideoValidator videoValidator = new();
-            ValidationResult validationResult = videoValidator.Validate(file);
-
-            if (!validationResult.IsValid) return new BadRequestObjectResult(validationResult.Errors.Select(x => x.ErrorMessage));
-            else if (await _videoService.FindByOriginalVideoName(_userId, file.FileName) != null) return BadRequest(new List<string> { "Duplicate file." });
-
-            return Ok(_mapper.Map<Video, PostVideoDto>(await _videoService.Create(file)));
         }
     }
 }

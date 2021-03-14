@@ -18,12 +18,14 @@ namespace VideoManager.Services
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
         Task<Video?> Delete(int? userId, int videoId);
         Task<Video?> FindByOriginalVideoName(int? userId, string originalVideoName);
+        Task<long> GetRemainingSpace(int? userId);
     }
 
     public class UserVideoService : IUserVideoService
     {
         private readonly VideoManagerDbContext _videoManagerDbContext;
         private readonly IFileService _fileService;
+        private const long totalAvailableSpaceInBytes = 1000000000;
 
         public UserVideoService(VideoManagerDbContext videoManagerDbContext,
             IFileService fileService)
@@ -94,6 +96,15 @@ namespace VideoManager.Services
             await Task.WhenAll(fileCreationTasks);
 
             return videos;
+        }
+
+        public async Task<long> GetRemainingSpace(int? userId)
+        {
+            long totalUsedSpace = await _videoManagerDbContext.Videos
+                .Where(x => x.CreatedByUserId == userId && x.Status != VideoStatus.Deleted)
+                .SumAsync(x => x.EncodedLength.HasValue ? x.EncodedLength.Value : x.OriginalLength);
+
+            return totalAvailableSpaceInBytes - totalUsedSpace;
         }
 
         public async Task<Video> Create(IFormFile formFile)
