@@ -72,9 +72,6 @@ namespace VideoManager.Services
             Stopwatch stopWatch = new();
             stopWatch.Start();
 
-            _logger.LogInformation(
-                "Starting encode of {video}.", video);
-
             string encodedFilePath = Path.GetTempPath() + Guid.NewGuid().ToString() + video.EncodedType;
 
             try
@@ -100,9 +97,6 @@ namespace VideoManager.Services
 
             encodeResult.EncodeTime = stopWatch.Elapsed;
 
-            _logger.LogInformation(
-                "Finished encode of {video} in {elapsedMilliseconds} milliseconds.", video, stopWatch.ElapsedMilliseconds);
-
             return encodeResult;
         }
 
@@ -126,8 +120,8 @@ namespace VideoManager.Services
 
             if (File.Exists(encodedFilePath) && !string.IsNullOrEmpty(encodedFileDirectory))
             {
-                string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + ".jpg");
-                string command = $"-loglevel error -i {encodedFilePath} -vf \"thumbnail,scale = 320:-2\" -frames:v 1 {outputThumbnailPath}";
+                string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + ".gif");
+                string command = $"-loglevel error -t 2.5 -i {encodedFilePath} -filter_complex \"[0:v] fps = 10,scale = 480:-1,split[a][b];[a] palettegen[p];[b][p] paletteuse\" {outputThumbnailPath}";
 
                 (string? _, string? standardError) = await RunCommandAsync(command);
 
@@ -136,5 +130,23 @@ namespace VideoManager.Services
 
             return null;
         }
+
+        //public async Task<string?> CreateThumbnail(Video video)
+        //{
+        //    string encodedFilePath = video.GetEncodedFilePath();
+        //    string? encodedFileDirectory = Path.GetDirectoryName(encodedFilePath);
+
+        //    if (File.Exists(encodedFilePath) && !string.IsNullOrEmpty(encodedFileDirectory))
+        //    {
+        //        string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + ".jpg");
+        //        string command = $"-loglevel error -i {encodedFilePath} -vf \"thumbnail,scale = 320:-2\" -frames:v 1 {outputThumbnailPath}";
+
+        //        (string? _, string? standardError) = await RunCommandAsync(command);
+
+        //        if (string.IsNullOrEmpty(standardError)) return outputThumbnailPath;
+        //    }
+
+        //    return null;
+        //}
     }
 }

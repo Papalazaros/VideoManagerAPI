@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using VideoManager.Models;
@@ -8,15 +9,12 @@ namespace VideoManager.Services
 {
     public class EncodingBackgroundService : BackgroundTaskService
     {
-        private const int _maxConcurrentTasks = 5;
+        private static readonly int _maxConcurrentTasks = Environment.ProcessorCount > 1 ? Environment.ProcessorCount - 1 : 1;
 
         public EncodingBackgroundService(ILogger<EncodingBackgroundService> logger, IServiceScopeFactory scopeFactory) : base(logger, scopeFactory) { }
 
         public override async Task<bool> DoWork()
         {
-            _logger.LogInformation(
-                "EncodeService is working.");
-
             using IServiceScope scope = _scopeFactory.CreateScope();
             IVideoManagerService videoService = scope.ServiceProvider.GetRequiredService<IVideoManagerService>();
             List<Video> videos = await videoService.GetVideosToEncode(_maxConcurrentTasks);

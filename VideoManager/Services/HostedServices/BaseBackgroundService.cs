@@ -12,11 +12,9 @@ namespace VideoManager.Services
     /// </summary>
     public abstract class BackgroundTaskService : BackgroundService
     {
-        // Dependencies
         protected readonly ILogger _logger;
         protected readonly IServiceScopeFactory _scopeFactory;
 
-        // Polling
         private const int _defaultPollingInterval = 15;
         private const int _maxPollingInterval = 300;
         private const int _pollingIntervalIncreaseRate = 2;
@@ -41,9 +39,6 @@ namespace VideoManager.Services
                 else if (!workCompleted)
                 {
                     TimeSpan _timeToCheckInterval = TimeSpan.FromSeconds(_pollingInterval);
-
-                    _logger.LogInformation(
-                        "No tasks found. Sleeping for {_pollingInterval} seconds.", _timeToCheckInterval.TotalSeconds);
 
                     await Task.Delay(_timeToCheckInterval, cancellationToken);
 

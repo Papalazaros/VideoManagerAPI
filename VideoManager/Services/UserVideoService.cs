@@ -74,7 +74,7 @@ namespace VideoManager.Services
         public Task<Video?> FindByOriginalVideoName(int? userId, string originalVideoName)
         {
             return _videoManagerDbContext.Videos
-                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && x.CreatedByUserId == userId)!;
+                .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && x.CreatedByUserId == userId && x.Status != VideoStatus.Deleted)!;
         }
 
         public async Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles)

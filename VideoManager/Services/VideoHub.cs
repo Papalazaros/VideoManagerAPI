@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using System.Threading.Tasks;
 using VideoManager.Models;
 
@@ -26,13 +25,15 @@ namespace VideoManager.Services
 
             if (authUser == null) return;
 
-            Room? room = await _roomService.Get(roomId);
             User? user = await _userService.CreateOrGetByAuthUser(authUser);
 
-            if (room != null && user != null && room.CreatedByUserId == user.UserId)
-            {
-                await Clients.OthersInGroup(roomId.ToString()).SendAsync("VideoSyncMessage", videoSyncMessage);
-            }
+            if (user == null) return;
+
+            Room? room = await _roomService.Get(roomId);
+
+            if (room == null || room.CreatedByUserId != user.UserId) return;
+
+            await Clients.OthersInGroup(roomId.ToString()).SendAsync("VideoSyncMessage", videoSyncMessage);
         }
 
         public async Task<string> JoinRoom(int roomId)

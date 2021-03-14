@@ -52,10 +52,10 @@ namespace VideoManager.Controllers
         public async Task<IActionResult> GetStream(int videoId)
         {
             Video video = await _videoService.Get(videoId);
-
             string videoPath = Path.Join(Directory.GetCurrentDirectory(), video?.GetEncodedFilePath());
 
             if (!System.IO.File.Exists(videoPath)) return NotFound();
+            if (HttpContext.Request.GetTypedHeaders().Range == null) return BadRequest();
 
             return PhysicalFile(videoPath, "video/mp4", true);
         }

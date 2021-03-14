@@ -14,9 +14,6 @@ namespace VideoManager.Services
 
         public override async Task<bool> DoWork()
         {
-            _logger.LogInformation(
-                "VideoBackgroundService is working.");
-
             using IServiceScope scope = _scopeFactory.CreateScope();
             IVideoManagerService videoService = scope.ServiceProvider.GetRequiredService<IVideoManagerService>();
 
