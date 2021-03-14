@@ -26,6 +26,7 @@ namespace VideoManager.Models
         public long OriginalLength { get; set; }
 
         public string? ThumbnailFilePath { get; set; }
+        public string? PreviewFilePath { get; set; }
 
         public int? DurationInSeconds { get; set; }
 

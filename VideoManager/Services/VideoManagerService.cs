@@ -14,6 +14,7 @@ namespace VideoManager.Services
         Task<IEnumerable<Video>> DeleteFailed();
         Task<IEnumerable<Video>> DeleteOrphaned();
         Task<IEnumerable<Video>> AssignThumbnails();
+        Task<IEnumerable<Video>> AssignPreviews();
         Task<IEnumerable<Video>> AssignDurations();
     }
 
@@ -54,17 +55,45 @@ namespace VideoManager.Services
 
         public async Task<IEnumerable<Video>> AssignThumbnails()
         {
-            List<Video> videos = await _videoManagerDbContext.Videos
-                .Where(x => x.Status == VideoStatus.Ready && string.IsNullOrEmpty(x.ThumbnailFilePath))
-                .ToListAsync();
+            Video[] videos = await _videoManagerDbContext.Videos
+                .Where(x => x.Status == VideoStatus.Ready)
+                .ToArrayAsync();
 
-            List<Task<string?>> videoThumbnailTasks = videos
+            videos = videos
+                .Where(x => string.IsNullOrEmpty(x.ThumbnailFilePath) || !File.Exists(x.ThumbnailFilePath))
+                .ToArray();
+
+            List<Task<string?>> tasks = videos
                 .Select(x => _encoderService.CreateThumbnail(x))
                 .ToList();
 
-            for (int i = 0; i < videoThumbnailTasks.Count; i++)
+            for (int i = 0; i < tasks.Count; i++)
             {
-                videos[i].ThumbnailFilePath = await videoThumbnailTasks[i];
+                videos[i].ThumbnailFilePath = await tasks[i];
+            }
+
+            await _videoManagerDbContext.SaveChangesAsync();
+
+            return videos;
+        }
+
+        public async Task<IEnumerable<Video>> AssignPreviews()
+        {
+            Video[] videos = await _videoManagerDbContext.Videos
+                .Where(x => x.Status == VideoStatus.Ready)
+                .ToArrayAsync();
+
+            videos = videos
+                .Where(x => string.IsNullOrEmpty(x.PreviewFilePath) || !File.Exists(x.PreviewFilePath))
+                .ToArray();
+
+            List<Task<string?>> tasks = videos
+                .Select(x => _encoderService.CreatePreview(x))
+                .ToList();
+
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                videos[i].PreviewFilePath = await tasks[i];
             }
 
             await _videoManagerDbContext.SaveChangesAsync();
@@ -104,6 +133,7 @@ namespace VideoManager.Services
                 .AsNoTracking()
                 .Where(x => x.Status == VideoStatus.Uploaded
                     || (x.Status == VideoStatus.Encoding && x.CreatedDate < _encodingCooldown))
+                .OrderBy(x => x.CreatedDate)
                 .Take(count)
                 .ToListAsync();
         }

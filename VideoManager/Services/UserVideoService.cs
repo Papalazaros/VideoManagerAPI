@@ -102,7 +102,7 @@ namespace VideoManager.Services
         {
             long totalUsedSpace = await _videoManagerDbContext.Videos
                 .Where(x => x.CreatedByUserId == userId && x.Status != VideoStatus.Deleted)
-                .SumAsync(x => x.EncodedLength.HasValue ? x.EncodedLength.Value : x.OriginalLength);
+                .SumAsync(x => x.EncodedLength ?? x.OriginalLength);
 
             return totalAvailableSpaceInBytes - totalUsedSpace;
         }

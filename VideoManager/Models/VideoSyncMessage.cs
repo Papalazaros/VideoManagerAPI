@@ -12,6 +12,6 @@
         Pause,
         Play,
         Seek,
-        ChangeVideo
+        Sync,
     }
 }

@@ -22,14 +22,11 @@ namespace VideoManager.Controllers
     public class VideosController : ControllerBase
     {
         private readonly IUserVideoService _videoService;
-        private readonly IMapper _mapper;
         private int? _userId => (int?)HttpContext?.Items["UserId"];
 
-        public VideosController(IUserVideoService videoService,
-            IMapper mapper)
+        public VideosController(IUserVideoService videoService)
         {
             _videoService = videoService;
-            _mapper = mapper;
         }
 
 
@@ -51,7 +48,7 @@ namespace VideoManager.Controllers
         public async Task<IActionResult> GetStream(int videoId)
         {
             Video video = await _videoService.Get(videoId);
-            string videoPath = Path.Join(Directory.GetCurrentDirectory(), video?.GetEncodedFilePath());
+            string videoPath = Path.GetFullPath(video.GetEncodedFilePath());
 
             if (!System.IO.File.Exists(videoPath)) return NotFound();
             if (HttpContext.Request.GetTypedHeaders().Range == null) return BadRequest();
@@ -67,11 +64,26 @@ namespace VideoManager.Controllers
 
             if (string.IsNullOrEmpty(video?.ThumbnailFilePath)) return NotFound();
 
-            string thumbnailPath = Path.Join(Directory.GetCurrentDirectory(), video.ThumbnailFilePath);
+            string thumbnailPath = Path.GetFullPath(video.ThumbnailFilePath);
 
             if (!System.IO.File.Exists(thumbnailPath)) return NotFound();
 
             return PhysicalFile(thumbnailPath, "image/jpeg");
+        }
+
+        [HttpGet]
+        [Route("{videoId:int}/Preview")]
+        public async Task<IActionResult> GetPreview(int videoId)
+        {
+            Video video = await _videoService.Get(videoId);
+
+            if (string.IsNullOrEmpty(video?.PreviewFilePath)) return NotFound();
+
+            string previewPath = Path.GetFullPath(video.PreviewFilePath);
+
+            if (!System.IO.File.Exists(previewPath)) return NotFound();
+
+            return PhysicalFile(previewPath, "image/gif");
         }
 
         [HttpGet]

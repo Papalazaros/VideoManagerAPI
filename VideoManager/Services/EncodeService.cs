@@ -12,6 +12,7 @@ namespace VideoManager.Services
         Task<EncodeResult> Encode(Video video);
         Task<int?> GetVideoDurationInSeconds(string path);
         Task<string?> CreateThumbnail(Video video);
+        Task<string?> CreatePreview(Video video);
     }
 
     public class EncodeService : IEncoder
@@ -113,7 +114,7 @@ namespace VideoManager.Services
             return null;
         }
 
-        public async Task<string?> CreateThumbnail(Video video)
+        public async Task<string?> CreatePreview(Video video)
         {
             string encodedFilePath = video.GetEncodedFilePath();
             string? encodedFileDirectory = Path.GetDirectoryName(encodedFilePath);
@@ -121,7 +122,10 @@ namespace VideoManager.Services
             if (File.Exists(encodedFilePath) && !string.IsNullOrEmpty(encodedFileDirectory))
             {
                 string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + ".gif");
-                string command = $"-loglevel error -t 2.5 -i {encodedFilePath} -filter_complex \"[0:v] fps = 10,scale = 480:-1,split[a][b];[a] palettegen[p];[b][p] paletteuse\" {outputThumbnailPath}";
+
+                if (File.Exists(outputThumbnailPath)) return outputThumbnailPath;
+
+                string command = $"-loglevel error -t 5 -i {encodedFilePath} -filter_complex \"[0:v] fps = 10,scale = 480:-1,split[a][b];[a] palettegen[p];[b][p] paletteuse\" {outputThumbnailPath}";
 
                 (string? _, string? standardError) = await RunCommandAsync(command);
 
@@ -131,22 +135,25 @@ namespace VideoManager.Services
             return null;
         }
 
-        //public async Task<string?> CreateThumbnail(Video video)
-        //{
-        //    string encodedFilePath = video.GetEncodedFilePath();
-        //    string? encodedFileDirectory = Path.GetDirectoryName(encodedFilePath);
+        public async Task<string?> CreateThumbnail(Video video)
+        {
+            string encodedFilePath = video.GetEncodedFilePath();
+            string? encodedFileDirectory = Path.GetDirectoryName(encodedFilePath);
 
-        //    if (File.Exists(encodedFilePath) && !string.IsNullOrEmpty(encodedFileDirectory))
-        //    {
-        //        string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + ".jpg");
-        //        string command = $"-loglevel error -i {encodedFilePath} -vf \"thumbnail,scale = 320:-2\" -frames:v 1 {outputThumbnailPath}";
+            if (File.Exists(encodedFilePath) && !string.IsNullOrEmpty(encodedFileDirectory))
+            {
+                string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + ".jpg");
 
-        //        (string? _, string? standardError) = await RunCommandAsync(command);
+                if (File.Exists(outputThumbnailPath)) return outputThumbnailPath;
 
-        //        if (string.IsNullOrEmpty(standardError)) return outputThumbnailPath;
-        //    }
+                string command = $"-loglevel error -i {encodedFilePath} -vf \"thumbnail,scale = 320:-2\" -frames:v 1 {outputThumbnailPath}";
 
-        //    return null;
-        //}
+                (string? _, string? standardError) = await RunCommandAsync(command);
+
+                if (string.IsNullOrEmpty(standardError)) return outputThumbnailPath;
+            }
+
+            return null;
+        }
     }
 }
