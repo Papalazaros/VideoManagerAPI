@@ -12,7 +12,7 @@ namespace VideoManager.Services
 {
     public interface IUserVideoService
     {
-        Task<List<Video>> GetAll(int? roomId, VideoStatus? videoStatus);
+        Task<IReadOnlyCollection<Video>> GetAll(int? roomId, VideoStatus? videoStatus);
         Task<Video> Get(int videoId);
         Task<Video> Create(IFormFile formFile);
         Task<IEnumerable<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
@@ -47,21 +47,23 @@ namespace VideoManager.Services
             return video;
         }
 
-        public Task<List<Video>> GetAll(int? roomId, VideoStatus? videoStatus)
+        public async Task<IReadOnlyCollection<Video>> GetAll(int? roomId, VideoStatus? videoStatus)
         {
             if (roomId.HasValue)
             {
-                return _videoManagerDbContext.RoomVideos
+                return await _videoManagerDbContext.RoomVideos
+                    .AsNoTracking()
                     .Include(x => x.Video)
                     .Where(x => x.RoomId == roomId && x.Video != null && (!videoStatus.HasValue || x.Video.Status == videoStatus))
                     .Select(x => x.Video!)
-                    .ToListAsync();
+                    .ToArrayAsync();
             }
             else
             {
-                return _videoManagerDbContext.Videos
+                return await _videoManagerDbContext.Videos
+                    .AsNoTracking()
                     .Where(x => (!_userId.HasValue || x.CreatedByUserId == _userId) && (!videoStatus.HasValue || x.Status == videoStatus))
-                    .ToListAsync();
+                    .ToArrayAsync();
             }
         }
 
@@ -78,6 +80,7 @@ namespace VideoManager.Services
         public Task<Video?> FindByOriginalVideoName(string originalVideoName)
         {
             return _videoManagerDbContext.Videos
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && x.CreatedByUserId == _userId && x.Status != VideoStatus.Deleted)!;
         }
 
@@ -103,6 +106,7 @@ namespace VideoManager.Services
         public async Task<long> GetRemainingSpace()
         {
             long totalUsedSpace = await _videoManagerDbContext.Videos
+                .AsNoTracking()
                 .Where(x => x.CreatedByUserId == _userId && x.Status != VideoStatus.Deleted)
                 .SumAsync(x => x.EncodedLength ?? x.OriginalLength);
 

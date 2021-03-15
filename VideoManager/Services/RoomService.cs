@@ -13,8 +13,8 @@ namespace VideoManager.Services
     public interface IRoomService
     {
         Task<Room> Get(int roomId);
-        Task<IEnumerable<Room>> GetAll();
-        Task<IEnumerable<Room>> GetMemberships();
+        Task<IReadOnlyCollection<Room>> GetAll();
+        Task<IReadOnlyCollection<Room>> GetMemberships();
         Task<Room> Create(string name);
         Task<RoomVideo> AddVideo(int roomId, int videoId);
         Task<RoomMember?> AddMember(int roomId, string memberEmail);
@@ -44,16 +44,18 @@ namespace VideoManager.Services
             return room;
         }
 
-        public async Task<IEnumerable<Room>> GetAll()
+        public async Task<IReadOnlyCollection<Room>> GetAll()
         {
             return await _videoManagerDbContext.Rooms
+                .AsNoTracking()
                 .Where(x => x.CreatedByUserId == _userId && x.RoomStatus == RoomStatus.Active)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Room>> GetMemberships()
+        public async Task<IReadOnlyCollection<Room>> GetMemberships()
         {
             return await _videoManagerDbContext.RoomMembers
+                .AsNoTracking()
                 .Where(x => x.UserId == _userId)
                 .Include(x => x.Room)
                 .Where(x => x.Room!.RoomStatus == RoomStatus.Active)

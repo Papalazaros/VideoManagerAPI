@@ -35,9 +35,8 @@ namespace VideoManager.Services
         {
             var tasks = (await _videoManagerDbContext.Videos
                 .Where(x => x.Status == VideoStatus.Ready && !x.DurationInSeconds.HasValue)
-                .ToArrayAsync())
                 .Select(x => new { video = x, task = _encoderService.GetVideoDurationInSeconds(x.GetEncodedFilePath()) })
-                .ToArray();
+                .ToArrayAsync());
 
             foreach (var taskObject in tasks)
             {

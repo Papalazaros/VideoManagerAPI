@@ -28,7 +28,7 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        public Task<List<Video>> GetAll(int? roomId, VideoStatus? videoStatus)
+        public Task<IReadOnlyCollection<Video>> GetAll(int? roomId, VideoStatus? videoStatus)
         {
             return _videoService.GetAll(roomId, videoStatus);
         }
