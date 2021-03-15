@@ -87,19 +87,18 @@ namespace VideoManager.Services
             return videoTasks.Length;
         }
 
-        public async Task<IEnumerable<Video>> DeleteFailed()
+        public Task<IEnumerable<Video>> DeleteFailed()
         {
-            List<int> videoIdsToRemove = await _videoManagerDbContext.Videos
+            IEnumerable<int> videoIdsToRemove = _videoManagerDbContext.Videos
                     .Where(x => x.Status == VideoStatus.Failed)
-                    .Select(x => x.VideoId)
-                    .ToListAsync();
+                    .Select(x => x.VideoId);
 
-            return await DeleteMany(videoIdsToRemove);
+            return DeleteMany(videoIdsToRemove);
         }
 
         public async Task<IEnumerable<Video>> DeleteOrphaned()
         {
-            List<int> videoIdsToRemove =
+            IEnumerable<int> videoIdsToRemove =
                 (
                 await _videoManagerDbContext.Videos
                     .Where(x => x.Status == VideoStatus.Ready)
@@ -107,8 +106,7 @@ namespace VideoManager.Services
                     .ToListAsync()
                 )
                 .Where(x => !File.Exists(x.EncodedFilePath))
-                .Select(x => x.VideoId)
-                .ToList();
+                .Select(x => x.VideoId);
 
             return await DeleteMany(videoIdsToRemove);
         }
@@ -116,7 +114,6 @@ namespace VideoManager.Services
         public Task<List<Video>> GetVideosToEncode(int count)
         {
             return _videoManagerDbContext.Videos
-                .AsNoTracking()
                 .Where(x => x.Status == VideoStatus.Uploaded
                     || (x.Status == VideoStatus.Encoding && x.CreatedDate < _encodingCooldown))
                 .OrderBy(x => x.CreatedDate)
@@ -131,8 +128,7 @@ namespace VideoManager.Services
 
             foreach (int videoId in videoIds)
             {
-                Video? video = await _videoManagerDbContext.Videos
-                    .FirstOrDefaultAsync(x => x.VideoId == videoId);
+                Video? video = await _videoManagerDbContext.Videos.FindAsync(videoId);
 
                 if (video != null)
                 {

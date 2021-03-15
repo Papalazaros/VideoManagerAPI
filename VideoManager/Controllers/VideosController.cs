@@ -29,9 +29,9 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Video>> GetAll(int? roomId, VideoStatus? videoStatus)
+        public Task<IEnumerable<Video>> GetAll(int? roomId, VideoStatus? videoStatus)
         {
-            return await _videoService.GetAll(_userId, roomId, videoStatus);
+            return _videoService.GetAll(_userId, roomId, videoStatus);
         }
 
         [HttpDelete]
