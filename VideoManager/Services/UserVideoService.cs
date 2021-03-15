@@ -12,7 +12,7 @@ namespace VideoManager.Services
 {
     public interface IUserVideoService
     {
-        Task<List<Video>> GetAll(int? userId, int? roomId, VideoStatus? videoStatus);
+        IEnumerable<Video> GetAll(int? userId, int? roomId, VideoStatus? videoStatus);
         Task<Video> Get(int videoId);
         Task<Video> Create(IFormFile formFile);
         Task<List<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
@@ -41,7 +41,7 @@ namespace VideoManager.Services
             return video;
         }
 
-        public Task<List<Video>> GetAll(int? userId, int? roomId, VideoStatus? videoStatus)
+        public IEnumerable<Video> GetAll(int? userId, int? roomId, VideoStatus? videoStatus)
         {
             if (roomId.HasValue)
             {
@@ -49,15 +49,13 @@ namespace VideoManager.Services
                     .AsNoTracking()
                     .Include(x => x.Video)
                     .Where(x => x.RoomId == roomId && x.Video != null && (!videoStatus.HasValue || x.Video.Status == videoStatus))
-                    .Select(x => x.Video!)
-                    .ToListAsync();
+                    .Select(x => x.Video!);
             }
             else
             {
                 return _videoManagerDbContext.Videos
                     .AsNoTracking()
-                    .Where(x => (!userId.HasValue || x.CreatedByUserId == userId) && (!videoStatus.HasValue || x.Status == videoStatus))
-                    .ToListAsync();
+                    .Where(x => (!userId.HasValue || x.CreatedByUserId == userId) && (!videoStatus.HasValue || x.Status == videoStatus));
             }
         }
 

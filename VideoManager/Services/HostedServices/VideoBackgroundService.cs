@@ -19,11 +19,11 @@ namespace VideoManager.Services
 
             IEnumerable<Video> orphanedFiles = await videoService.DeleteOrphaned();
             IEnumerable<Video> failedFiles = await videoService.DeleteFailed();
-            IEnumerable<Video> thumbnailsAssigned = await videoService.AssignThumbnails();
-            IEnumerable<Video> previewsAssigned = await videoService.AssignPreviews();
-            IEnumerable<Video> durationsAssigned = await videoService.AssignDurations();
+            int thumbnailsAssigned = await videoService.AssignThumbnails();
+            int previewsAssigned = await videoService.AssignPreviews();
+            int durationsAssigned = await videoService.AssignDurations();
 
-            return orphanedFiles.Any() || failedFiles.Any() || thumbnailsAssigned.Any() || previewsAssigned.Any() || durationsAssigned.Any();
+            return orphanedFiles.Any() || failedFiles.Any() || thumbnailsAssigned > 0 || previewsAssigned > 0 || durationsAssigned > 0;
         }
     }
 }

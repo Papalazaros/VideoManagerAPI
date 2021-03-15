@@ -23,14 +23,14 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        public async Task<List<Room>> Get()
+        public async Task<IEnumerable<Room>> Get()
         {
             return await _roomService.GetAll();
         }
 
         [HttpGet]
         [Route("Memberships")]
-        public async Task<List<Room>> GetMemberships()
+        public async Task<IEnumerable<Room>> GetMemberships()
         {
             return await _roomService.GetMemberships();
         }

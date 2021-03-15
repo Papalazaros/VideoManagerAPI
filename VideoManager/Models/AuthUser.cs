@@ -31,6 +31,5 @@ namespace VideoManager.Models
 
         [JsonPropertyName("email_verified")]
         public bool? EmailVerified { get; set; }
-
     }
 }

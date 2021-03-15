@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using FluentValidation.Results;
+﻿using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -28,7 +27,6 @@ namespace VideoManager.Controllers
         {
             _videoService = videoService;
         }
-
 
         [HttpGet]
         public async Task<IEnumerable<Video>> GetAll(int? roomId, VideoStatus? videoStatus)
