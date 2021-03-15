@@ -25,8 +25,6 @@ namespace VideoManager.Services
             IEncoder encodingService = scope.ServiceProvider.GetRequiredService<IEncoder>();
             List<Task<EncodeResult>> encodingTasks = new(videos.Count);
 
-            videoManagerDbContext.UpdateRange(videos);
-
             foreach (Video video in videos)
             {
                 encodingTasks.Add(encodingService.Encode(video));

@@ -1,6 +1,6 @@
-﻿namespace VideoManager.Models.Dto
+﻿namespace VideoManager.Models.DTO
 {
-    public class PostVideoDto
+    public class PostVideoDTO
     {
         public int? VideoId { get; set; }
         public string? OriginalFileName { get; set; }

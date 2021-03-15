@@ -21,7 +21,6 @@ namespace VideoManager.Controllers
     public class VideosController : ControllerBase
     {
         private readonly IUserVideoService _videoService;
-        private int? _userId => (int?)HttpContext?.Items["UserId"];
 
         public VideosController(IUserVideoService videoService)
         {
@@ -29,16 +28,16 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        public Task<IEnumerable<Video>> GetAll(int? roomId, VideoStatus? videoStatus)
+        public Task<List<Video>> GetAll(int? roomId, VideoStatus? videoStatus)
         {
-            return _videoService.GetAll(_userId, roomId, videoStatus);
+            return _videoService.GetAll(roomId, videoStatus);
         }
 
         [HttpDelete]
         [Route("{videoId:int}")]
         public async Task<Video?> Delete(int videoId)
         {
-            return await _videoService.Delete(_userId, videoId);
+            return await _videoService.Delete(videoId);
         }
 
         [HttpGet]
@@ -66,7 +65,7 @@ namespace VideoManager.Controllers
 
             if (!System.IO.File.Exists(thumbnailPath)) return NotFound();
 
-            return PhysicalFile(thumbnailPath, "image/jpeg");
+            return PhysicalFile(thumbnailPath, "image/webp");
         }
 
         [HttpGet]
@@ -81,7 +80,7 @@ namespace VideoManager.Controllers
 
             if (!System.IO.File.Exists(previewPath)) return NotFound();
 
-            return PhysicalFile(previewPath, "image/gif");
+            return PhysicalFile(previewPath, "image/webp");
         }
 
         [HttpGet]
@@ -95,7 +94,7 @@ namespace VideoManager.Controllers
         public async Task<IActionResult> Post(IEnumerable<IFormFile> files)
         {
             if (files == null) return BadRequest();
-            long remainingSpace = await _videoService.GetRemainingSpace(_userId);
+            long remainingSpace = await _videoService.GetRemainingSpace();
 
             Dictionary<string, IEnumerable<string>> failedFiles = new();
             VideoValidator videoValidator = new();
@@ -106,12 +105,12 @@ namespace VideoManager.Controllers
 
                 if (!validationResult.IsValid) failedFiles[file.FileName] = validationResult.Errors.Select(x => x.ErrorMessage);
                 else if (remainingSpace - file.Length <= 0) failedFiles[file.FileName] = new List<string> { "No space remaining." };
-                else if (await _videoService.FindByOriginalVideoName(_userId, file.FileName) != null) failedFiles[file.FileName] = new List<string> { "Duplicate file." };
+                else if (await _videoService.FindByOriginalVideoName(file.FileName) != null) failedFiles[file.FileName] = new List<string> { "Duplicate file." };
                 else remainingSpace -= file.Length;
             }
 
             IEnumerable<IFormFile> validVideos = files.Where(x => !failedFiles.ContainsKey(x.FileName));
-            List<Video> createdVideos = await _videoService.CreateMany(validVideos);
+            IEnumerable<Video> createdVideos = await _videoService.CreateMany(validVideos);
 
             return Ok(new { failed = failedFiles, created = createdVideos });
         }

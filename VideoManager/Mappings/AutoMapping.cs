@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using VideoManager.Models;
-using VideoManager.Models.Dto;
+using VideoManager.Models.DTO;
 
 namespace VideoManager
 {
@@ -8,7 +8,7 @@ namespace VideoManager
     {
         public AutoMapping()
         {
-            CreateMap<Video, PostVideoDto>()
+            CreateMap<Video, PostVideoDTO>()
                 .ForMember(dest => dest.VideoId, opt => opt.MapFrom(src => src.VideoId))
                 .ForMember(dest => dest.OriginalFileName, opt => opt.MapFrom(src => src.OriginalFileName))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));

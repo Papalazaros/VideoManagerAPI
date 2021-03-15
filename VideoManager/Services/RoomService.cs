@@ -47,7 +47,6 @@ namespace VideoManager.Services
         public async Task<IEnumerable<Room>> GetAll()
         {
             return await _videoManagerDbContext.Rooms
-                .AsNoTracking()
                 .Where(x => x.CreatedByUserId == _userId && x.RoomStatus == RoomStatus.Active)
                 .ToListAsync();
         }
@@ -55,7 +54,6 @@ namespace VideoManager.Services
         public async Task<IEnumerable<Room>> GetMemberships()
         {
             return await _videoManagerDbContext.RoomMembers
-                .AsNoTracking()
                 .Where(x => x.UserId == _userId)
                 .Include(x => x.Room)
                 .Where(x => x.Room!.RoomStatus == RoomStatus.Active)

@@ -49,15 +49,9 @@ namespace VideoManager.Services
                 };
 
                 process.Start();
-
-                while (!process.HasExited)
-                {
-                    await Task.Delay(10000);
-                }
-
                 standardOutput = await process.StandardOutput.ReadToEndAsync();
                 standardError = await process.StandardError.ReadToEndAsync();
-                process.WaitForExit();
+                await process.WaitForExitAsync();
             }
             catch (Exception e)
             {
@@ -121,11 +115,11 @@ namespace VideoManager.Services
 
             if (File.Exists(encodedFilePath) && !string.IsNullOrEmpty(encodedFileDirectory))
             {
-                string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + ".gif");
+                string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + "_preview.webp");
 
                 if (File.Exists(outputThumbnailPath)) return outputThumbnailPath;
 
-                string command = $"-loglevel error -t 5 -i {encodedFilePath} -filter_complex \"[0:v] fps = 10,scale = 480:-1,split[a][b];[a] palettegen[p];[b][p] paletteuse\" {outputThumbnailPath}";
+                string command = $"-loglevel error -i {encodedFilePath} -vf \"scale = 320:-2\" -t 00:00:03 {outputThumbnailPath}";
 
                 (string? _, string? standardError) = await RunCommandAsync(command);
 
@@ -142,7 +136,7 @@ namespace VideoManager.Services
 
             if (File.Exists(encodedFilePath) && !string.IsNullOrEmpty(encodedFileDirectory))
             {
-                string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + ".jpg");
+                string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + "_thumbnail.webp");
 
                 if (File.Exists(outputThumbnailPath)) return outputThumbnailPath;
 
