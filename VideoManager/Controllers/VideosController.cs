@@ -47,7 +47,6 @@ namespace VideoManager.Controllers
             Video video = await _videoService.Get(videoId);
             string videoPath = Path.GetFullPath(video.GetEncodedFilePath());
 
-            if (!System.IO.File.Exists(videoPath)) return NotFound();
             if (HttpContext.Request.GetTypedHeaders().Range == null) return BadRequest();
 
             return PhysicalFile(videoPath, "video/mp4", true);
@@ -63,8 +62,6 @@ namespace VideoManager.Controllers
 
             string thumbnailPath = Path.GetFullPath(video.ThumbnailFilePath);
 
-            if (!System.IO.File.Exists(thumbnailPath)) return NotFound();
-
             return PhysicalFile(thumbnailPath, "image/webp");
         }
 
@@ -77,8 +74,6 @@ namespace VideoManager.Controllers
             if (string.IsNullOrEmpty(video?.PreviewFilePath)) return NotFound();
 
             string previewPath = Path.GetFullPath(video.PreviewFilePath);
-
-            if (!System.IO.File.Exists(previewPath)) return NotFound();
 
             return PhysicalFile(previewPath, "image/webp");
         }

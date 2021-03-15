@@ -28,8 +28,6 @@ namespace VideoManager.Services
 
         private async Task<(string?, string?)> RunCommandAsync(string arguments, string fileName = "ffmpeg.exe")
         {
-            if (!File.Exists(fileName)) throw new Exception($"{fileName} not found.");
-
             string? standardOutput = null;
             string? standardError = null;
 
@@ -97,13 +95,10 @@ namespace VideoManager.Services
 
         public async Task<int?> GetVideoDurationInSeconds(string path)
         {
-            if (File.Exists(path))
-            {
-                string command = $"-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration \"{path}\"";
-                (string? standardOutput, string? standardError) = await RunCommandAsync(command, "ffprobe.exe");
+            string command = $"-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration \"{path}\"";
+            (string? standardOutput, string? standardError) = await RunCommandAsync(command, "ffprobe.exe");
 
-                if (string.IsNullOrEmpty(standardError) && double.TryParse(standardOutput, out double parsedValue)) return (int)parsedValue;
-            }
+            if (string.IsNullOrEmpty(standardError) && double.TryParse(standardOutput, out double parsedValue)) return (int)parsedValue;
 
             return null;
         }
@@ -113,11 +108,9 @@ namespace VideoManager.Services
             string encodedFilePath = video.GetEncodedFilePath();
             string? encodedFileDirectory = Path.GetDirectoryName(encodedFilePath);
 
-            if (File.Exists(encodedFilePath) && !string.IsNullOrEmpty(encodedFileDirectory))
+            if (!string.IsNullOrEmpty(encodedFileDirectory))
             {
                 string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + "_preview.webp");
-
-                if (File.Exists(outputThumbnailPath)) return outputThumbnailPath;
 
                 string command = $"-loglevel error -i {encodedFilePath} -vf \"scale = 320:-2\" -t 00:00:03 {outputThumbnailPath}";
 
@@ -134,11 +127,9 @@ namespace VideoManager.Services
             string encodedFilePath = video.GetEncodedFilePath();
             string? encodedFileDirectory = Path.GetDirectoryName(encodedFilePath);
 
-            if (File.Exists(encodedFilePath) && !string.IsNullOrEmpty(encodedFileDirectory))
+            if (!string.IsNullOrEmpty(encodedFileDirectory))
             {
                 string outputThumbnailPath = Path.Combine(encodedFileDirectory, video.VideoId + "_thumbnail.webp");
-
-                if (File.Exists(outputThumbnailPath)) return outputThumbnailPath;
 
                 string command = $"-loglevel error -i {encodedFilePath} -vf \"thumbnail,scale = 320:-2\" -frames:v 1 {outputThumbnailPath}";
 

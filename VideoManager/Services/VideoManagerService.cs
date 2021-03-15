@@ -52,11 +52,9 @@ namespace VideoManager.Services
         public async Task<int> AssignThumbnails()
         {
             var tasks = (await _videoManagerDbContext.Videos
-                .Where(x => x.Status == VideoStatus.Ready)
-                .ToArrayAsync())
-                .Where(x => string.IsNullOrEmpty(x.ThumbnailFilePath) || !File.Exists(x.ThumbnailFilePath))
+                .Where(x => x.Status == VideoStatus.Ready && string.IsNullOrEmpty(x.ThumbnailFilePath))
                 .Select(x => new { video = x, task = _encoderService.CreateThumbnail(x) })
-                .ToArray();
+                .ToArrayAsync());
 
             foreach (var taskObject in tasks)
             {
@@ -71,11 +69,9 @@ namespace VideoManager.Services
         public async Task<int> AssignPreviews()
         {
             var tasks = (await _videoManagerDbContext.Videos
-                .Where(x => x.Status == VideoStatus.Ready)
-                .ToArrayAsync())
-                .Where(x => string.IsNullOrEmpty(x.PreviewFilePath) || !File.Exists(x.PreviewFilePath))
+                .Where(x => x.Status == VideoStatus.Ready && string.IsNullOrEmpty(x.PreviewFilePath))
                 .Select(x => new { video = x, task = _encoderService.CreatePreview(x) })
-                .ToArray();
+                .ToArrayAsync());
 
             foreach (var taskObject in tasks)
             {
