@@ -69,7 +69,7 @@ namespace VideoManager.Services
 
             try
             {
-                string arguments = $"-loglevel error -i {video.GetOriginalFilePath()} -codec:v libx264 -filter_complex \"scale = iw * min(1\\, min(1920 / iw\\, 1280 / ih)):-2\" -b:v 2M -maxrate 2M -bufsize 1M -c:a copy -preset medium -crf 26 -y -threads 1 {encodedFilePath}";
+                string arguments = $"-loglevel error -i {video.GetOriginalFilePath()} -c:v libx264 -c:a aac -maxrate 2M -bufsize 2M -crf 28 -filter_complex \"scale = iw * min(1\\, min(1280 / iw\\, 720 / ih)):-2\"  -y -threads 1 {encodedFilePath}";
                 (string? standardOutput, string? standardError) = await RunCommandAsync(arguments);
 
                 if (string.IsNullOrEmpty(standardError)) encodeResult.Success = true;
