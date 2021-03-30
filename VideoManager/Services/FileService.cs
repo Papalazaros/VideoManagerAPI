@@ -24,11 +24,9 @@ namespace VideoManager.Services
 
         public async Task Create(Stream data, string filePath)
         {
-            using (data)
-            {
-                using FileStream createdFile = File.Create(filePath);
-                await data.CopyToAsync(createdFile);
-            }
+            using FileStream createdFile = File.Create(filePath);
+            await data.CopyToAsync(createdFile);
+            await createdFile.FlushAsync();
         }
 
         public bool Move(string sourceFilePath, Video video)

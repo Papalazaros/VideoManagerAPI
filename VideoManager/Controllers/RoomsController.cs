@@ -23,16 +23,16 @@ namespace VideoManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Room>> Get()
+        public Task<IEnumerable<Room>> Get()
         {
-            return await _roomService.GetAll();
+            return _roomService.GetAll();
         }
 
         [HttpGet]
         [Route("Memberships")]
-        public async Task<IEnumerable<Room>> GetMemberships()
+        public Task<IEnumerable<Room>> GetMemberships()
         {
-            return await _roomService.GetMemberships();
+            return _roomService.GetMemberships();
         }
 
         [HttpGet]
@@ -47,16 +47,16 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{roomId:int}/AddVideo")]
-        public async Task<RoomVideo> AddVideo(int roomId, int videoId)
+        public Task<RoomVideo> AddVideo(int roomId, int videoId)
         {
-            return await _roomService.AddVideo(roomId, videoId);
+            return _roomService.AddVideo(roomId, videoId);
         }
 
         [HttpGet]
         [Route("{roomId:int}/AddMember")]
-        public async Task<RoomMember?> AddMember(int roomId, string memberEmail)
+        public Task<RoomMember?> AddMember(int roomId, string memberEmail)
         {
-            return await _roomService.AddMember(roomId, memberEmail);
+            return _roomService.AddMember(roomId, memberEmail);
         }
 
         [HttpGet]
@@ -75,15 +75,15 @@ namespace VideoManager.Controllers
 
         [HttpDelete]
         [Route("{roomId:int}")]
-        public async Task<Room> Delete(int roomId)
+        public Task<Room> Delete(int roomId)
         {
-            return await _roomService.Delete(roomId);
+            return _roomService.Delete(roomId);
         }
 
         [HttpPost]
-        public async Task<Room> Post(string name)
+        public Task<Room> Post(string name)
         {
-            return await _roomService.Create(name);
+            return _roomService.Create(name);
         }
     }
 }

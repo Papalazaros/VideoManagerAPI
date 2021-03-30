@@ -1,9 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using VideoManager.Models;
 
 namespace VideoManager.Services
 {
@@ -17,13 +14,11 @@ namespace VideoManager.Services
             using IServiceScope scope = _scopeFactory.CreateScope();
             IVideoManagerService videoService = scope.ServiceProvider.GetRequiredService<IVideoManagerService>();
 
-            IEnumerable<Video> orphanedFiles = await videoService.DeleteOrphaned();
-            IEnumerable<Video> failedFiles = await videoService.DeleteFailed();
             int thumbnailsAssigned = await videoService.AssignThumbnails();
             int previewsAssigned = await videoService.AssignPreviews();
             int durationsAssigned = await videoService.AssignDurations();
 
-            return orphanedFiles.Any() || failedFiles.Any() || thumbnailsAssigned > 0 || previewsAssigned > 0 || durationsAssigned > 0;
+            return thumbnailsAssigned > 0 || previewsAssigned > 0 || durationsAssigned > 0;
         }
     }
 }

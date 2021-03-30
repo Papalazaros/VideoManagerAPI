@@ -14,8 +14,7 @@ namespace VideoManager.Services
     {
         Task<IReadOnlyCollection<Video>> GetAll(int? roomId, VideoStatus? videoStatus);
         Task<Video> Get(int videoId);
-        Task<Video> Create(IFormFile formFile);
-        Task<IEnumerable<Video>> CreateMany(IEnumerable<IFormFile> formFiles);
+        Task<IEnumerable<Video>> Create(IEnumerable<IFormFile> formFiles);
         Task<Video?> Delete(int videoId);
         Task<Video?> FindByOriginalVideoName(string originalVideoName);
         Task<long> GetRemainingSpace();
@@ -84,7 +83,7 @@ namespace VideoManager.Services
                 .FirstOrDefaultAsync(x => x.OriginalFileName == originalVideoName && x.CreatedByUserId == _userId && x.Status != VideoStatus.Deleted)!;
         }
 
-        public async Task<IEnumerable<Video>> CreateMany(IEnumerable<IFormFile> formFiles)
+        public async Task<IEnumerable<Video>> Create(IEnumerable<IFormFile> formFiles)
         {
             List<Task> fileCreationTasks = new();
             List<Video> videos = new();
@@ -93,7 +92,8 @@ namespace VideoManager.Services
             {
                 Video video = CreateVideoFromIFormFile(formFile);
                 videos.Add(video);
-                fileCreationTasks.Add(_fileService.Create(formFile.OpenReadStream(), video.GetOriginalFilePath()));
+                using Stream dataStream = formFile.OpenReadStream();
+                fileCreationTasks.Add(_fileService.Create(dataStream, video.GetOriginalFilePath()));
             }
 
             await _videoManagerDbContext.Videos.AddRangeAsync(videos);
@@ -111,17 +111,6 @@ namespace VideoManager.Services
                 .SumAsync(x => x.EncodedLength ?? x.OriginalLength);
 
             return totalAvailableSpaceInBytes - totalUsedSpace;
-        }
-
-        public async Task<Video> Create(IFormFile formFile)
-        {
-            Video video = CreateVideoFromIFormFile(formFile);
-
-            await _videoManagerDbContext.Videos.AddAsync(video);
-            await _videoManagerDbContext.SaveChangesAsync();
-            await _fileService.Create(formFile.OpenReadStream(), video.GetOriginalFilePath());
-
-            return video;
         }
 
         private static Video CreateVideoFromIFormFile(IFormFile formFile)

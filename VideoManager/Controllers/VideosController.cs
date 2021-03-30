@@ -35,9 +35,9 @@ namespace VideoManager.Controllers
 
         [HttpDelete]
         [Route("{videoId:int}")]
-        public async Task<Video?> Delete(int videoId)
+        public Task<Video?> Delete(int videoId)
         {
-            return await _videoService.Delete(videoId);
+            return _videoService.Delete(videoId);
         }
 
         [HttpGet]
@@ -80,9 +80,9 @@ namespace VideoManager.Controllers
 
         [HttpGet]
         [Route("{videoId:int}")]
-        public async Task<Video> Get(int videoId)
+        public Task<Video> Get(int videoId)
         {
-            return await _videoService.Get(videoId);
+            return _videoService.Get(videoId);
         }
 
         [HttpPost]
@@ -105,7 +105,7 @@ namespace VideoManager.Controllers
             }
 
             IEnumerable<IFormFile> validVideos = files.Where(x => !failedFiles.ContainsKey(x.FileName));
-            IEnumerable<Video> createdVideos = await _videoService.CreateMany(validVideos);
+            IEnumerable<Video> createdVideos = await _videoService.Create(validVideos);
 
             return Ok(new { failed = failedFiles, created = createdVideos });
         }

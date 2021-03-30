@@ -47,9 +47,10 @@ namespace VideoManager.Services
                 };
 
                 process.Start();
+
+                await process.WaitForExitAsync();
                 standardOutput = await process.StandardOutput.ReadToEndAsync();
                 standardError = await process.StandardError.ReadToEndAsync();
-                await process.WaitForExitAsync();
             }
             catch (Exception e)
             {
@@ -69,7 +70,7 @@ namespace VideoManager.Services
 
             try
             {
-                string arguments = $"-loglevel error -i {video.GetOriginalFilePath()} -c:v libx264 -c:a aac -maxrate 2M -bufsize 2M -crf 28 -filter_complex \"scale = iw * min(1\\, min(1280 / iw\\, 720 / ih)):-2\"  -y -threads 1 {encodedFilePath}";
+                string arguments = $"-loglevel error -i {video.GetOriginalFilePath()} -codec:v libx264 -filter_complex \"scale = iw * min(1\\, min(1280 / iw\\, 720 / ih)):-2\" -maxrate 2M -bufsize 2M -c:a copy -crf 28 -y -threads 1 {encodedFilePath}";
                 (string? standardOutput, string? standardError) = await RunCommandAsync(arguments);
 
                 if (string.IsNullOrEmpty(standardError)) encodeResult.Success = true;
