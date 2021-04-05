@@ -8,9 +8,20 @@ namespace VideoManager.Models
     public class Video : BaseEntity
     {
         public const string Directory = "Videos";
-        public string GetOriginalFilePath() => $@"{Directory}\{OriginalFileName}";
-        public string GetEncodedFilePath() => $@"{Directory}\{VideoId}{EncodedType}";
-        public override string ToString() => $"Id: {VideoId}\nOriginalFileName: {OriginalFileName}";
+        public string GetOriginalFilePath()
+        {
+            return $@"{Directory}\{OriginalFileName}";
+        }
+
+        public string GetEncodedFilePath()
+        {
+            return $@"{Directory}\{VideoId}{EncodedType}";
+        }
+
+        public override string ToString()
+        {
+            return $"Id: {VideoId}\nOriginalFileName: {OriginalFileName}";
+        }
 
         [Key]
         public int VideoId { get; set; }

@@ -23,15 +23,24 @@ namespace VideoManager.Services
         {
             AuthUser? authUser = await _authService.GetUser(authToken);
 
-            if (authUser == null) return;
+            if (authUser == null)
+            {
+                return;
+            }
 
             User? user = await _userService.CreateOrGetByAuthUser(authUser);
 
-            if (user == null) return;
+            if (user == null)
+            {
+                return;
+            }
 
             Room? room = await _roomService.Get(roomId);
 
-            if (room == null || room.CreatedByUserId != user.UserId) return;
+            if (room == null || room.CreatedByUserId != user.UserId)
+            {
+                return;
+            }
 
             await Clients.OthersInGroup(roomId.ToString()).SendAsync("VideoSyncMessage", videoSyncMessage);
         }

@@ -47,7 +47,10 @@ namespace VideoManager.Controllers
             Video video = await _videoService.Get(videoId);
             string videoPath = Path.GetFullPath(video.GetEncodedFilePath());
 
-            if (HttpContext.Request.GetTypedHeaders().Range == null) return BadRequest();
+            if (HttpContext.Request.GetTypedHeaders().Range == null)
+            {
+                return BadRequest();
+            }
 
             return PhysicalFile(videoPath, "video/mp4", true);
         }
@@ -58,7 +61,10 @@ namespace VideoManager.Controllers
         {
             Video video = await _videoService.Get(videoId);
 
-            if (string.IsNullOrEmpty(video?.ThumbnailFilePath)) return NotFound();
+            if (string.IsNullOrEmpty(video?.ThumbnailFilePath))
+            {
+                return NotFound();
+            }
 
             string thumbnailPath = Path.GetFullPath(video.ThumbnailFilePath);
 
@@ -71,7 +77,10 @@ namespace VideoManager.Controllers
         {
             Video video = await _videoService.Get(videoId);
 
-            if (string.IsNullOrEmpty(video?.PreviewFilePath)) return NotFound();
+            if (string.IsNullOrEmpty(video?.PreviewFilePath))
+            {
+                return NotFound();
+            }
 
             string previewPath = Path.GetFullPath(video.PreviewFilePath);
 
@@ -88,7 +97,11 @@ namespace VideoManager.Controllers
         [HttpPost]
         public async Task<IActionResult> Post(IEnumerable<IFormFile> files)
         {
-            if (files == null) return BadRequest();
+            if (files == null)
+            {
+                return BadRequest();
+            }
+
             long remainingSpace = await _videoService.GetRemainingSpace();
 
             Dictionary<string, IEnumerable<string>> failedFiles = new();
@@ -98,10 +111,22 @@ namespace VideoManager.Controllers
             {
                 ValidationResult validationResult = videoValidator.Validate(file);
 
-                if (!validationResult.IsValid) failedFiles[file.FileName] = validationResult.Errors.Select(x => x.ErrorMessage);
-                else if (remainingSpace - file.Length <= 0) failedFiles[file.FileName] = new List<string> { "No space remaining." };
-                else if (await _videoService.FindByOriginalVideoName(file.FileName) != null) failedFiles[file.FileName] = new List<string> { "Duplicate file." };
-                else remainingSpace -= file.Length;
+                if (!validationResult.IsValid)
+                {
+                    failedFiles[file.FileName] = validationResult.Errors.Select(x => x.ErrorMessage);
+                }
+                else if (remainingSpace - file.Length <= 0)
+                {
+                    failedFiles[file.FileName] = new List<string> { "No space remaining." };
+                }
+                else if (await _videoService.FindByOriginalVideoName(file.FileName) != null)
+                {
+                    failedFiles[file.FileName] = new List<string> { "Duplicate file." };
+                }
+                else
+                {
+                    remainingSpace -= file.Length;
+                }
             }
 
             IEnumerable<IFormFile> validVideos = files.Where(x => !failedFiles.ContainsKey(x.FileName));

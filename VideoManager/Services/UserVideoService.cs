@@ -40,9 +40,17 @@ namespace VideoManager.Services
         public async Task<Video> Get(int videoId)
         {
             Video video = await _videoManagerDbContext.Videos.FindAsync(videoId);
-            if (video == null || video.Status == VideoStatus.Deleted) throw new NotFoundException();
+            if (video == null || video.Status == VideoStatus.Deleted)
+            {
+                throw new NotFoundException();
+            }
+
             bool hasAccess = video.CreatedByUserId == _userId || _videoManagerDbContext.RoomMembers.Where(x => x.UserId == _userId).Join(_videoManagerDbContext.RoomVideos.Where(x => x.VideoId == videoId), x => x.RoomId, x => x.RoomId, (member, _) => member).Any();
-            if (!hasAccess) throw new UnauthorizedAccessException();
+            if (!hasAccess)
+            {
+                throw new UnauthorizedAccessException();
+            }
+
             return video;
         }
 

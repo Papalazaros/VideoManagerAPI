@@ -24,7 +24,10 @@ namespace VideoManager.Services
 
         public async Task<User?> CreateOrGetByAuthUser(AuthUser authUser)
         {
-            if (_memoryCache.TryGetValue(authUser.Sub, out User? user)) return user;
+            if (_memoryCache.TryGetValue(authUser.Sub, out User? user))
+            {
+                return user;
+            }
 
             user = await _videoManagerDbContext.Users.FirstOrDefaultAsync(x => x.Auth0Id == authUser.Sub);
 

@@ -27,18 +27,27 @@ namespace VideoManager.Services
 
         public async Task<AuthUser?> GetUser(string token)
         {
-            if (_memoryCache.TryGetValue(token, out AuthUser? user)) return user;
+            if (_memoryCache.TryGetValue(token, out AuthUser? user))
+            {
+                return user;
+            }
 
             using HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, "https://dev-fuzknswu.auth0.com/userinfo");
             httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             using HttpResponseMessage httpResponseMessage = await _httpClient.SendAsync(httpRequestMessage);
 
-            if (!httpResponseMessage.IsSuccessStatusCode) return null;
+            if (!httpResponseMessage.IsSuccessStatusCode)
+            {
+                return null;
+            }
 
             using Stream stream = await httpResponseMessage.Content.ReadAsStreamAsync();
             user = await JsonSerializer.DeserializeAsync<AuthUser>(stream);
 
-            if (user != null) _memoryCache.Set(token, user, TimeSpan.FromSeconds(86400));
+            if (user != null)
+            {
+                _memoryCache.Set(token, user, TimeSpan.FromSeconds(86400));
+            }
 
             return user;
         }

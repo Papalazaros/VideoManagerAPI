@@ -43,14 +43,14 @@ namespace VideoManager
 
         private void AddTimestamps()
         {
-            var entities = ChangeTracker.Entries().Where(x => x.Entity is BaseEntity
+            System.Collections.Generic.IEnumerable<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry>? entities = ChangeTracker.Entries().Where(x => x.Entity is BaseEntity
                 && (x.State == EntityState.Added || x.State == EntityState.Modified));
 
             int? userId = (int?)_httpContextAccessor.HttpContext?.Items["UserId"];
 
             DateTime utcNow = DateTime.UtcNow;
 
-            foreach (var entity in entities)
+            foreach (Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry? entity in entities)
             {
                 if (entity.State == EntityState.Added)
                 {

@@ -19,7 +19,10 @@ namespace VideoManager.Services
             IVideoManagerService videoService = scope.ServiceProvider.GetRequiredService<IVideoManagerService>();
             List<Video> videos = await videoService.GetVideosToEncode(_maxConcurrentTasks);
 
-            if (videos.Count == 0) return false;
+            if (videos.Count == 0)
+            {
+                return false;
+            }
 
             VideoManagerDbContext videoManagerDbContext = scope.ServiceProvider.GetRequiredService<VideoManagerDbContext>();
             IEncoder encodingService = scope.ServiceProvider.GetRequiredService<IEncoder>();

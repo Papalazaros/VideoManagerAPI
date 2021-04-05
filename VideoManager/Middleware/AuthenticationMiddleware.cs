@@ -21,7 +21,10 @@ namespace VideoManager.Middleware
             string? scheme = null;
             string? parameter = null;
 
-            if (string.IsNullOrWhiteSpace(authorizationHeader)) return (scheme, parameter);
+            if (string.IsNullOrWhiteSpace(authorizationHeader))
+            {
+                return (scheme, parameter);
+            }
 
             string headerValue = authorizationHeader[0];
             string[] splitHeader = headerValue.Split(' ');

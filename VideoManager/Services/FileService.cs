@@ -48,7 +48,10 @@ namespace VideoManager.Services
 
         public void Delete(string filePath)
         {
-            if (File.Exists(filePath)) File.Delete(filePath);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
         }
     }
 }

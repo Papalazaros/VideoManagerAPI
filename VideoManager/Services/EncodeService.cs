@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using VideoManager.Models;
 
@@ -26,38 +27,47 @@ namespace VideoManager.Services
             _fileService = fileService;
         }
 
-        private async Task<(string?, string?)> RunCommandAsync(string arguments, string fileName = "ffmpeg.exe")
+        private static async Task<(string output, string error)> RunCommandAsync(string arguments, string fileName = "ffmpeg")
         {
-            string? standardOutput = null;
-            string? standardError = null;
+            StringBuilder standardOutput = new();
+            StringBuilder standardError = new();
 
-            try
+            using Process process = new()
             {
-                using Process process = new()
+                StartInfo = new ProcessStartInfo
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        WindowStyle = ProcessWindowStyle.Hidden,
-                        FileName = fileName,
-                        Arguments = arguments,
-                        UseShellExecute = false,
-                        RedirectStandardError = true,
-                        RedirectStandardOutput = true
-                    }
-                };
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    FileName = fileName,
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true,
+                }
+            };
 
-                process.Start();
-
-                await process.WaitForExitAsync();
-                standardOutput = await process.StandardOutput.ReadToEndAsync();
-                standardError = await process.StandardError.ReadToEndAsync();
-            }
-            catch (Exception e)
+            process.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
             {
-                _logger.LogError(e, "Failure executing process.");
-            }
+                if (!string.IsNullOrEmpty(e.Data))
+                {
+                    standardOutput.AppendLine(e.Data);
+                }
+            });
 
-            return (standardOutput, standardError);
+            process.ErrorDataReceived += new DataReceivedEventHandler((sender, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                {
+                    standardError.AppendLine(e.Data);
+                }
+            });
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            await process.WaitForExitAsync();
+
+            return (standardOutput.ToString(), standardError.ToString());
         }
 
         public async Task<EncodeResult> Encode(Video video)
@@ -71,10 +81,16 @@ namespace VideoManager.Services
             try
             {
                 string arguments = $"-loglevel error -i {video.GetOriginalFilePath()} -codec:v libx264 -filter_complex \"scale = iw * min(1\\, min(1280 / iw\\, 720 / ih)):-2\" -maxrate 2M -bufsize 2M -c:a copy -crf 28 -y -threads 1 {encodedFilePath}";
-                (string? standardOutput, string? standardError) = await RunCommandAsync(arguments);
+                (string standardOutput, string standardError) = await RunCommandAsync(arguments);
 
-                if (string.IsNullOrEmpty(standardError)) encodeResult.Success = true;
-                else _logger.LogError("Error in ffmpeg process {ErrorMessage}", standardError);
+                if (string.IsNullOrEmpty(standardError))
+                {
+                    encodeResult.Success = true;
+                }
+                else
+                {
+                    _logger.LogError("Error in ffmpeg process {ErrorMessage}", standardError);
+                }
             }
             catch (Exception e)
             {
@@ -84,7 +100,10 @@ namespace VideoManager.Services
             if (encodeResult.Success)
             {
                 encodeResult.Success = _fileService.Move(encodedFilePath, video);
-                if (encodeResult.Success) encodeResult.EncodedFileLength = new FileInfo(video.GetEncodedFilePath()).Length;
+                if (encodeResult.Success)
+                {
+                    encodeResult.EncodedFileLength = new FileInfo(video.GetEncodedFilePath()).Length;
+                }
             }
 
             stopWatch.Stop();
@@ -99,7 +118,10 @@ namespace VideoManager.Services
             string command = $"-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration \"{path}\"";
             (string? standardOutput, string? standardError) = await RunCommandAsync(command, "ffprobe.exe");
 
-            if (string.IsNullOrEmpty(standardError) && double.TryParse(standardOutput, out double parsedValue)) return (int)parsedValue;
+            if (string.IsNullOrEmpty(standardError) && double.TryParse(standardOutput, out double parsedValue))
+            {
+                return (int)parsedValue;
+            }
 
             return null;
         }
@@ -117,7 +139,10 @@ namespace VideoManager.Services
 
                 (string? _, string? standardError) = await RunCommandAsync(command);
 
-                if (string.IsNullOrEmpty(standardError)) return outputThumbnailPath;
+                if (string.IsNullOrEmpty(standardError))
+                {
+                    return outputThumbnailPath;
+                }
             }
 
             return null;
@@ -136,7 +161,10 @@ namespace VideoManager.Services
 
                 (string? _, string? standardError) = await RunCommandAsync(command);
 
-                if (string.IsNullOrEmpty(standardError)) return outputThumbnailPath;
+                if (string.IsNullOrEmpty(standardError))
+                {
+                    return outputThumbnailPath;
+                }
             }
 
             return null;

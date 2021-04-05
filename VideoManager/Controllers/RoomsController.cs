@@ -40,8 +40,16 @@ namespace VideoManager.Controllers
         public async Task<IActionResult> Get(int roomId)
         {
             (bool canView, Room room) = await _roomService.CanView(roomId);
-            if (room == null) return NotFound();
-            if (!canView) return Unauthorized();
+            if (room == null)
+            {
+                return NotFound();
+            }
+
+            if (!canView)
+            {
+                return Unauthorized();
+            }
+
             return Ok(room);
         }
 
